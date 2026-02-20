@@ -1,2 +1,1 @@
-// Custom React hooks
-export {}
+export { useGridGame } from './useGridGame'
