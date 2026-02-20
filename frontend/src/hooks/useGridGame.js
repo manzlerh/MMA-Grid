@@ -16,6 +16,7 @@ export function useGridGame(puzzle) {
   const [gameOver, setGameOver] = useState(false)
   const [gameWon, setGameWon] = useState(false)
   const [isValidating, setIsValidating] = useState(false)
+  const [lastFailedCell, setLastFailedCell] = useState(null)
 
   const selectCell = useCallback(
     (row, col) => {
@@ -60,6 +61,8 @@ export function useGridGame(puzzle) {
           setScore((s) => s + (100 - (9 - attemptsLeft) * 5))
           setSelectedCell(null)
         } else {
+          setLastFailedCell({ row, col })
+          setTimeout(() => setLastFailedCell(null), 600)
           setAttemptsLeft((n) => {
             const next = n - 1
             if (next <= 0) setGameOver(true)
@@ -86,6 +89,7 @@ export function useGridGame(puzzle) {
     gameOver,
     gameWon,
     isValidating,
+    lastFailedCell,
     selectCell,
     submitFighter,
     closeCell,

@@ -1,6 +1,15 @@
 import { Fragment } from 'react'
+import { motion } from 'framer-motion'
 
-export default function GridBoard({ puzzle = {}, board = [], onCellClick, lockedCells = new Set() }) {
+const shakeVariants = {
+  shake: {
+    x: [0, -6, 6, -6, 6, 0],
+    transition: { duration: 0.4 },
+  },
+  idle: { x: 0 },
+}
+
+export default function GridBoard({ puzzle = {}, board = [], onCellClick, lockedCells = new Set(), shakingCell = null }) {
   const columns = puzzle.columns ?? ['', '', '']
   const rows = puzzle.rows ?? ['', '', '']
   const lockedSet = lockedCells instanceof Set ? lockedCells : new Set(lockedCells ?? [])
@@ -33,21 +42,28 @@ export default function GridBoard({ puzzle = {}, board = [], onCellClick, locked
             const fighter = getCell(r, c)
             const locked = isLocked(r, c)
             const isEmpty = !fighter
+            const isShaking = shakingCell?.row === r && shakingCell?.col === c
+            const CellWrapper = isShaking ? motion.div : Fragment
+            const wrapperProps = isShaking
+              ? { animate: 'shake', variants: shakeVariants, className: 'aspect-square' }
+              : {}
             return (
-              <button
-                key={`${r}-${c}`}
-                type="button"
-                disabled={!isEmpty}
-                onClick={() => isEmpty && onCellClick?.(r, c)}
-                className={`aspect-square flex items-center justify-center text-center p-1 transition-colors
-                  ${isEmpty
-                    ? 'bg-ufc-card border border-ufc-border cursor-pointer hover:border-ufc-red text-ufc-text'
-                    : 'bg-ufc-red/90 border border-ufc-red text-white'}
-                  ${locked ? 'ring-2 ring-green-500/80 ring-inset' : ''}
-                `}
-              >
-                {fighter?.name ?? ''}
-              </button>
+              <CellWrapper key={`wrap-${r}-${c}`} {...wrapperProps}>
+                <button
+                  key={`${r}-${c}`}
+                  type="button"
+                  disabled={!isEmpty}
+                  onClick={() => isEmpty && onCellClick?.(r, c)}
+                  className={`w-full aspect-square flex items-center justify-center text-center p-1 transition-colors
+                    ${isEmpty
+                      ? 'bg-ufc-card border border-ufc-border cursor-pointer hover:border-ufc-red text-ufc-text'
+                      : 'bg-ufc-red/90 border border-ufc-red text-white'}
+                    ${locked ? 'ring-2 ring-green-500/80 ring-inset' : ''}
+                  `}
+                >
+                  {fighter?.name ?? ''}
+                </button>
+              </CellWrapper>
             )
           })}
         </Fragment>
