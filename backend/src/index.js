@@ -5,7 +5,9 @@ const express = require('express');
 const cors = require('cors');
 
 const { pool } = require('./db');
-const fightersRouter = require('./routes/fighters');
+const fighters = require('./routes/fighters');
+const fightersRouter = fighters;
+const fightersSearch = fighters.handleSearch;
 const dailyRouter = require('./routes/daily');
 const validateRouter = require('./routes/validate');
 const scoresRouter = require('./routes/scores');
@@ -16,6 +18,10 @@ app.set('pool', pool);
 app.use(cors());
 app.use(express.json());
 
+app.get('/api', (req, res) => res.json({ ok: true, message: 'UFC trivia API' }));
+
+// Explicit route so GET /api/fighters/search is always matched (avoids 404 from router mount)
+app.get('/api/fighters/search', fightersSearch);
 app.use('/api/fighters', fightersRouter);
 app.use('/api/daily', dailyRouter);
 app.use('/api/validate', validateRouter);
