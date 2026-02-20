@@ -1,2 +1,1 @@
-// React context for user state
-export {}
+export { UserProvider, useUser } from './UserContext'
