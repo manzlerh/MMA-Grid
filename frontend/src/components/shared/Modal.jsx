@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
 import { Dialog } from '@headlessui/react'
-import { motion, AnimatePresence } from 'framer-motion'
 
 export default function Modal({ isOpen, onClose, title, children }) {
   useEffect(() => {
@@ -11,15 +10,10 @@ export default function Modal({ isOpen, onClose, title, children }) {
   }, [isOpen, onClose])
 
   return (
-    <AnimatePresence mode="wait">
+    <Dialog open={isOpen} onClose={onClose} transition={false} static className="relative z-50">
       {isOpen && (
-        <Dialog key="modal-dialog" static open onClose={onClose} className="relative z-50">
-          <motion.div
-            key="modal-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+        <>
+          <div
             className="fixed inset-0 bg-black/60 backdrop-blur-sm"
             aria-hidden="true"
             onClick={onClose}
@@ -27,12 +21,6 @@ export default function Modal({ isOpen, onClose, title, children }) {
           <div className="fixed inset-0 flex items-center justify-center p-4 pointer-events-none">
             <div className="pointer-events-auto w-full max-w-md">
               <Dialog.Panel
-                as={motion.div}
-                key="modal-panel"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.2 }}
                 className="relative bg-ufc-card border border-ufc-border rounded-lg shadow-xl p-6"
                 onClick={(e) => e.stopPropagation()}
               >
@@ -55,8 +43,8 @@ export default function Modal({ isOpen, onClose, title, children }) {
               </Dialog.Panel>
             </div>
           </div>
-        </Dialog>
+        </>
       )}
-    </AnimatePresence>
+    </Dialog>
   )
 }
