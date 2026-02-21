@@ -50,11 +50,12 @@ NATIONALITY_ATTRIBUTES = [
     {"id": "russian_fighter", "label": "Russian Fighter", "category": "nationality", "requires_fight_history": False, "match_fn": lambda f: _nat(f, "Russia", "Russian")},
     {"id": "irish_fighter", "label": "Irish Fighter", "category": "nationality", "requires_fight_history": False, "match_fn": lambda f: _nat(f, "Ireland", "Irish")},
     {"id": "mexican_fighter", "label": "Mexican Fighter", "category": "nationality", "requires_fight_history": False, "match_fn": lambda f: _nat(f, "Mexico", "Mexican")},
+    {"id": "nigerian_fighter", "label": "Nigerian Fighter", "category": "nationality", "requires_fight_history": False, "match_fn": lambda f: _nat(f, "Nigeria", "Nigerian")},
     {"id": "chinese_fighter", "label": "Chinese Fighter", "category": "nationality", "requires_fight_history": False, "match_fn": lambda f: _nat(f, "China", "Chinese")},
     {"id": "japanese_fighter", "label": "Japanese Fighter", "category": "nationality", "requires_fight_history": False, "match_fn": lambda f: _nat(f, "Japan", "Japanese")},
     {"id": "australian_fighter", "label": "Australian Fighter", "category": "nationality", "requires_fight_history": False, "match_fn": lambda f: _nat(f, "Australia", "Australian")},
     {"id": "canadian_fighter", "label": "Canadian Fighter", "category": "nationality", "requires_fight_history": False, "match_fn": lambda f: _nat(f, "Canada", "Canadian")},
-    # Georgian, Dagestani excluded until fighter data has enough; re-add when present
+    {"id": "georgian_fighter", "label": "Georgian Fighter", "category": "nationality", "requires_fight_history": False, "match_fn": lambda f: _nat(f, "Georgia", "Georgian")},
 ]
 
 # -----------------------------------------------------------------------------
@@ -85,14 +86,19 @@ def _int(fighter: dict, key: str, default: int = 0) -> int:
         return default
 
 
-# Attributes that need is_champion, title_weight_classes, performance_bonuses are excluded until that data is in the fighter set.
+# Champion/bonus attributes may have few matches; use for hard puzzles or when combination yields enough.
 ACHIEVEMENT_ATTRIBUTES = [
+    {"id": "former_ufc_champion", "label": "Former UFC Champion", "category": "achievement", "requires_fight_history": False, "match_fn": lambda f: bool(f.get("is_former_champion"))},
+    {"id": "current_ufc_champion", "label": "Current UFC Champion", "category": "achievement", "requires_fight_history": False, "match_fn": lambda f: bool(f.get("is_champion"))},
+    {"id": "two_division_champion", "label": "Two-Division Champion", "category": "achievement", "requires_fight_history": False, "match_fn": lambda f: (f.get("title_weight_classes") or []) and len(f.get("title_weight_classes") or []) >= 2},
     {"id": "undefeated_in_ufc", "label": "Undefeated in UFC", "category": "achievement", "requires_fight_history": False, "match_fn": lambda f: _int(f, "losses") == 0 and _int(f, "total_fights", 0) > 0},
     {"id": "won_by_ko_5_plus", "label": "Won by KO/TKO 5+ times", "category": "achievement", "requires_fight_history": False, "match_fn": lambda f: _int(f, "win_by_ko") >= 5},
     {"id": "won_by_sub_5_plus", "label": "Won by Submission 5+ times", "category": "achievement", "requires_fight_history": False, "match_fn": lambda f: _int(f, "win_by_sub") >= 5},
     {"id": "decision_specialist", "label": "Decision Specialist (8+ decision wins)", "category": "achievement", "requires_fight_history": False, "match_fn": lambda f: _int(f, "win_by_dec") >= 8},
     {"id": "ufc_wins_10_plus", "label": "10+ UFC Wins", "category": "achievement", "requires_fight_history": False, "match_fn": lambda f: _int(f, "wins") >= 10},
     {"id": "ufc_wins_20_plus", "label": "20+ UFC Wins", "category": "achievement", "requires_fight_history": False, "match_fn": lambda f: _int(f, "wins") >= 20},
+    {"id": "has_performance_bonus", "label": "Has a Performance Bonus", "category": "achievement", "requires_fight_history": False, "match_fn": lambda f: _int(f, "performance_bonuses") >= 1},
+    {"id": "has_fight_of_the_night", "label": "Has a Fight of the Night Bonus", "category": "achievement", "requires_fight_history": False, "match_fn": lambda f: _int(f, "performance_bonuses") >= 1},
     {"id": "never_been_finished", "label": "Never Been Finished", "category": "achievement", "requires_fight_history": False, "match_fn": lambda f: _int(f, "losses") == 0},
 ]
 

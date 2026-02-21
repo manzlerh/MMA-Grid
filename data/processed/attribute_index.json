@@ -1220,6 +1220,12 @@
       "Francisco Trevino",
       "Will Campuzano"
     ],
+    "nigerian_fighter": [
+      "Kennedy Nzechukwu",
+      "Kamaru Usman",
+      "Israel Adesanya",
+      "Oluwale Bamgbose"
+    ],
     "chinese_fighter": [
       "Wang Cong",
       "Eduarda Moura",
@@ -1404,6 +1410,11 @@
       "Gary Goodridge",
       "Dave Beneteau",
       "Harold Howard"
+    ],
+    "georgian_fighter": [
+      "Giga Chikadze",
+      "Merab Dvalishvili",
+      "Roman Dolidze"
     ],
     "competed_heavyweight": [
       "Jailton Almeida",
@@ -3766,6 +3777,9 @@
       "Heather Clark",
       "Aisling Daly"
     ],
+    "former_ufc_champion": [],
+    "current_ufc_champion": [],
+    "two_division_champion": [],
     "undefeated_in_ufc": [
       "Farid Basharat",
       "Quillan Salkilld",
@@ -4335,6 +4349,8 @@
       "Michael Bisping",
       "Georges St-Pierre"
     ],
+    "has_performance_bonus": [],
+    "has_fight_of_the_night": [],
     "never_been_finished": [
       "Farid Basharat",
       "Quillan Salkilld",
@@ -9831,6 +9847,7 @@
     ],
     "Merab Dvalishvili": [
       "american_fighter",
+      "georgian_fighter",
       "competed_bantamweight",
       "decision_specialist",
       "ufc_wins_10_plus",
@@ -10599,6 +10616,7 @@
     ],
     "Kamaru Usman": [
       "american_fighter",
+      "nigerian_fighter",
       "competed_middleweight",
       "competed_welterweight",
       "decision_specialist",
@@ -12884,6 +12902,7 @@
     ],
     "Oluwale Bamgbose": [
       "american_fighter",
+      "nigerian_fighter",
       "competed_middleweight",
       "striker_style"
     ],
@@ -16097,6 +16116,25 @@
       "competed_flyweight",
       "orthodox_stance"
     ],
+    "Kennedy Nzechukwu": [
+      "nigerian_fighter",
+      "competed_heavyweight",
+      "competed_light_heavyweight",
+      "won_by_ko_5_plus",
+      "southpaw_stance",
+      "striker_style",
+      "gym_fortis_mma"
+    ],
+    "Israel Adesanya": [
+      "nigerian_fighter",
+      "competed_light_heavyweight",
+      "competed_middleweight",
+      "won_by_ko_5_plus",
+      "decision_specialist",
+      "ufc_wins_10_plus",
+      "wrestler_style",
+      "gym_city_kickboxing"
+    ],
     "Wang Cong": [
       "chinese_fighter",
       "southpaw_stance",
@@ -17248,6 +17286,20 @@
       "orthodox_stance",
       "striker_style"
     ],
+    "Giga Chikadze": [
+      "georgian_fighter",
+      "competed_featherweight",
+      "orthodox_stance",
+      "wrestler_style"
+    ],
+    "Roman Dolidze": [
+      "georgian_fighter",
+      "competed_light_heavyweight",
+      "competed_middleweight",
+      "won_by_ko_5_plus",
+      "orthodox_stance",
+      "gym_aka"
+    ],
     "Junior Tafa": [
       "competed_heavyweight",
       "competed_light_heavyweight",
@@ -17259,14 +17311,6 @@
       "won_by_ko_5_plus",
       "ufc_wins_10_plus",
       "wrestler_style"
-    ],
-    "Kennedy Nzechukwu": [
-      "competed_heavyweight",
-      "competed_light_heavyweight",
-      "won_by_ko_5_plus",
-      "southpaw_stance",
-      "striker_style",
-      "gym_fortis_mma"
     ],
     "Tom Aspinall": [
       "competed_heavyweight",
@@ -17630,13 +17674,6 @@
       "orthodox_stance",
       "wrestler_style"
     ],
-    "Roman Dolidze": [
-      "competed_light_heavyweight",
-      "competed_middleweight",
-      "won_by_ko_5_plus",
-      "orthodox_stance",
-      "gym_aka"
-    ],
     "Rafael Cerquiera": [
       "competed_light_heavyweight"
     ],
@@ -17649,15 +17686,6 @@
       "competed_light_heavyweight",
       "southpaw_stance",
       "wrestler_style"
-    ],
-    "Israel Adesanya": [
-      "competed_light_heavyweight",
-      "competed_middleweight",
-      "won_by_ko_5_plus",
-      "decision_specialist",
-      "ufc_wins_10_plus",
-      "wrestler_style",
-      "gym_city_kickboxing"
     ],
     "Trevin Giles": [
       "competed_light_heavyweight",
@@ -18809,11 +18837,6 @@
       "southpaw_stance",
       "wrestler_style",
       "gym_tristar"
-    ],
-    "Giga Chikadze": [
-      "competed_featherweight",
-      "orthodox_stance",
-      "wrestler_style"
     ],
     "Morgan Charriere": [
       "competed_featherweight",
