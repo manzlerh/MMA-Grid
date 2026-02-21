@@ -27,15 +27,16 @@ export default function ConnectionsBoard({
   return (
     <LayoutGroup>
       <div className="space-y-4 w-full max-w-2xl mx-auto">
-        {/* Solved groups as full-width banners */}
+        {/* Solved groups as full-width banners — slide down from above */}
         <AnimatePresence mode="popLayout">
           {solvedGroups.map((group, idx) => (
             <motion.div
               key={group.label ?? idx}
               layout
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
               exit={{ opacity: 0, height: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 24 }}
               className={`rounded-lg px-4 py-3 ${GROUP_COLORS[group.color] ?? GROUP_COLORS.yellow}`}
             >
               <p className="font-display text-sm uppercase tracking-wide opacity-90">

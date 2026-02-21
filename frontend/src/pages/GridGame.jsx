@@ -3,7 +3,7 @@ import { getDailyPuzzle, submitScore } from '../services/api'
 import { useUser } from '../context'
 import { useGridGame } from '../hooks'
 import { Navbar, Modal, ShareButton } from '../components/shared'
-import { GridBoard, CellModal } from '../components/grid'
+import { GridBoard, CellModal, GridSkeleton } from '../components/grid'
 
 function todayFormatted() {
   return new Date().toLocaleDateString('en-US', {
@@ -88,11 +88,21 @@ export default function GridGame() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-ufc-dark flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <span className="w-10 h-10 border-2 border-ufc-gold border-t-transparent rounded-full animate-spin" />
-          <p className="text-ufc-muted">Loading today&apos;s puzzle...</p>
-        </div>
+      <div className="min-h-screen bg-ufc-dark text-ufc-text">
+        <Navbar />
+        <main className="max-w-2xl mx-auto px-4 py-6">
+          <header className="text-center mb-6">
+            <div className="h-4 w-32 mx-auto bg-ufc-card rounded animate-pulse" />
+            <div className="h-8 w-48 mx-auto bg-ufc-gold/20 rounded mt-3 animate-pulse" />
+            <div className="flex justify-center gap-1 mt-3">
+              {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                <span key={i} className="w-4 h-4 bg-ufc-border rounded-full" />
+              ))}
+            </div>
+          </header>
+          <GridSkeleton />
+          <p className="text-center text-ufc-muted text-sm mt-4">Loading today&apos;s puzzle...</p>
+        </main>
       </div>
     )
   }
