@@ -10,16 +10,30 @@ from typing import Any
 
 
 def _nat(fighter: dict, *values: str) -> bool:
+    """Match if any value equals nationality or appears in it (e.g. 'English' in 'Afghan, English')."""
     n = (fighter.get("nationality") or "").strip().lower()
-    return n in (v.lower() for v in values)
+    if not n:
+        return False
+    for v in values:
+        vlo = v.strip().lower()
+        if n == vlo or vlo in n or ("," in n and vlo in n):
+            return True
+    return False
 
 
-def _weight_class(fighter: dict, label: str) -> bool:
-    # label like "Heavyweight", "Light Heavyweight", etc.
+def _weight_class(fighter: dict, label: str, also: list[str] | None = None) -> bool:
+    # label like "Heavyweight"; also can include e.g. "Women's Strawweight" for Strawweight
     wc = fighter.get("weight_classes") or []
     if not isinstance(wc, list):
         return False
-    return any((s or "").strip().lower() == label.strip().lower() for s in wc)
+    label_lo = label.strip().lower()
+    for s in wc:
+        s_lo = (s or "").strip().lower()
+        if s_lo == label_lo:
+            return True
+        if also and s_lo in (a.strip().lower() for a in also):
+            return True
+    return False
 
 
 def _gym_contains(fighter: dict, substring: str) -> bool:
@@ -36,14 +50,11 @@ NATIONALITY_ATTRIBUTES = [
     {"id": "russian_fighter", "label": "Russian Fighter", "category": "nationality", "requires_fight_history": False, "match_fn": lambda f: _nat(f, "Russia", "Russian")},
     {"id": "irish_fighter", "label": "Irish Fighter", "category": "nationality", "requires_fight_history": False, "match_fn": lambda f: _nat(f, "Ireland", "Irish")},
     {"id": "mexican_fighter", "label": "Mexican Fighter", "category": "nationality", "requires_fight_history": False, "match_fn": lambda f: _nat(f, "Mexico", "Mexican")},
-    {"id": "nigerian_fighter", "label": "Nigerian Fighter", "category": "nationality", "requires_fight_history": False, "match_fn": lambda f: _nat(f, "Nigeria", "Nigerian")},
-    {"id": "british_fighter", "label": "British Fighter", "category": "nationality", "requires_fight_history": False, "match_fn": lambda f: _nat(f, "United Kingdom", "UK", "England", "British", "Wales", "Scotland")},
     {"id": "chinese_fighter", "label": "Chinese Fighter", "category": "nationality", "requires_fight_history": False, "match_fn": lambda f: _nat(f, "China", "Chinese")},
     {"id": "japanese_fighter", "label": "Japanese Fighter", "category": "nationality", "requires_fight_history": False, "match_fn": lambda f: _nat(f, "Japan", "Japanese")},
     {"id": "australian_fighter", "label": "Australian Fighter", "category": "nationality", "requires_fight_history": False, "match_fn": lambda f: _nat(f, "Australia", "Australian")},
     {"id": "canadian_fighter", "label": "Canadian Fighter", "category": "nationality", "requires_fight_history": False, "match_fn": lambda f: _nat(f, "Canada", "Canadian")},
-    {"id": "georgian_fighter", "label": "Georgian Fighter", "category": "nationality", "requires_fight_history": False, "match_fn": lambda f: _nat(f, "Georgia")},
-    {"id": "dagestani_fighter", "label": "Dagestani Fighter", "category": "nationality", "requires_fight_history": False, "match_fn": lambda f: _nat(f, "Dagestan", "Dagestani")},
+    # Georgian, Dagestani excluded until fighter data has enough; re-add when present
 ]
 
 # -----------------------------------------------------------------------------
@@ -58,7 +69,7 @@ WEIGHT_CLASS_ATTRIBUTES = [
     {"id": "competed_featherweight", "label": "Competed at Featherweight", "category": "weightclass", "requires_fight_history": False, "match_fn": lambda f: _weight_class(f, "Featherweight")},
     {"id": "competed_bantamweight", "label": "Competed at Bantamweight", "category": "weightclass", "requires_fight_history": False, "match_fn": lambda f: _weight_class(f, "Bantamweight")},
     {"id": "competed_flyweight", "label": "Competed at Flyweight", "category": "weightclass", "requires_fight_history": False, "match_fn": lambda f: _weight_class(f, "Flyweight")},
-    {"id": "competed_strawweight", "label": "Competed at Strawweight", "category": "weightclass", "requires_fight_history": False, "match_fn": lambda f: _weight_class(f, "Strawweight")},
+    {"id": "competed_strawweight", "label": "Competed at Strawweight", "category": "weightclass", "requires_fight_history": False, "match_fn": lambda f: _weight_class(f, "Strawweight", ["Women's Strawweight"])},
 ]
 
 # -----------------------------------------------------------------------------
@@ -74,54 +85,19 @@ def _int(fighter: dict, key: str, default: int = 0) -> int:
         return default
 
 
+# Attributes that need is_champion, title_weight_classes, performance_bonuses are excluded until that data is in the fighter set.
 ACHIEVEMENT_ATTRIBUTES = [
-    {"id": "former_ufc_champion", "label": "Former UFC Champion", "category": "achievement", "requires_fight_history": False, "match_fn": lambda f: bool(f.get("is_former_champion"))},
-    {"id": "current_ufc_champion", "label": "Current UFC Champion", "category": "achievement", "requires_fight_history": False, "match_fn": lambda f: bool(f.get("is_champion"))},
-    {"id": "two_division_champion", "label": "Two-Division Champion", "category": "achievement", "requires_fight_history": False, "match_fn": lambda f: (f.get("title_weight_classes") or []) and len(f.get("title_weight_classes") or []) >= 2},
     {"id": "undefeated_in_ufc", "label": "Undefeated in UFC", "category": "achievement", "requires_fight_history": False, "match_fn": lambda f: _int(f, "losses") == 0 and _int(f, "total_fights", 0) > 0},
     {"id": "won_by_ko_5_plus", "label": "Won by KO/TKO 5+ times", "category": "achievement", "requires_fight_history": False, "match_fn": lambda f: _int(f, "win_by_ko") >= 5},
     {"id": "won_by_sub_5_plus", "label": "Won by Submission 5+ times", "category": "achievement", "requires_fight_history": False, "match_fn": lambda f: _int(f, "win_by_sub") >= 5},
     {"id": "decision_specialist", "label": "Decision Specialist (8+ decision wins)", "category": "achievement", "requires_fight_history": False, "match_fn": lambda f: _int(f, "win_by_dec") >= 8},
     {"id": "ufc_wins_10_plus", "label": "10+ UFC Wins", "category": "achievement", "requires_fight_history": False, "match_fn": lambda f: _int(f, "wins") >= 10},
     {"id": "ufc_wins_20_plus", "label": "20+ UFC Wins", "category": "achievement", "requires_fight_history": False, "match_fn": lambda f: _int(f, "wins") >= 20},
-    {"id": "has_performance_bonus", "label": "Has a Performance Bonus", "category": "achievement", "requires_fight_history": False, "match_fn": lambda f: _int(f, "performance_bonuses") >= 1},
-    {"id": "has_fight_of_the_night", "label": "Has a Fight of the Night Bonus", "category": "achievement", "requires_fight_history": False, "match_fn": lambda f: _int(f, "performance_bonuses") >= 1},  # schema has single count; treat as any bonus
-    {"id": "never_been_finished", "label": "Never Been Finished", "category": "achievement", "requires_fight_history": False, "match_fn": lambda f: _int(f, "losses") == 0},  # conservative: no losses => never finished
+    {"id": "never_been_finished", "label": "Never Been Finished", "category": "achievement", "requires_fight_history": False, "match_fn": lambda f: _int(f, "losses") == 0},
 ]
 
-# -----------------------------------------------------------------------------
-# Era (ufc_debut_year; "active" may need last_fight_date from fight_history later)
-# -----------------------------------------------------------------------------
-def _debut_year(fighter: dict) -> int | None:
-    y = fighter.get("ufc_debut_year")
-    if y is None:
-        return None
-    try:
-        return int(y)
-    except (TypeError, ValueError):
-        return None
-
-
-ERA_ATTRIBUTES = [
-    {"id": "ufc_debut_before_2010", "label": "UFC Debut Before 2010", "category": "era", "requires_fight_history": False, "match_fn": lambda f: (_debut_year(f) or 9999) < 2010},
-    {"id": "ufc_debut_2010_2015", "label": "UFC Debut 2010-2015", "category": "era", "requires_fight_history": False, "match_fn": lambda f: 2010 <= (_debut_year(f) or 0) <= 2015},
-    {"id": "ufc_debut_2016_2020", "label": "UFC Debut 2016-2020", "category": "era", "requires_fight_history": False, "match_fn": lambda f: 2016 <= (_debut_year(f) or 0) <= 2020},
-    {"id": "ufc_debut_after_2020", "label": "UFC Debut After 2020", "category": "era", "requires_fight_history": False, "match_fn": lambda f: (_debut_year(f) or 0) > 2020},
-    {"id": "active_fighter_18_months", "label": "Active Fighter (fought in last 18 months)", "category": "era", "requires_fight_history": True, "match_fn": lambda f, hist=None: _active_in_last_18_months(f, hist)},
-    {"id": "retired_fighter", "label": "Retired Fighter", "category": "era", "requires_fight_history": True, "match_fn": lambda f, hist=None: not _active_in_last_18_months(f, hist) and (hist is not None and len(hist) > 0)},
-]
-
-
-def _active_in_last_18_months(fighter: dict, fight_history: list[dict] | None) -> bool:
-    if not fight_history:
-        return False
-    from datetime import datetime, timedelta
-    cutoff = (datetime.utcnow() - timedelta(days=18 * 30)).year
-    for fight in fight_history:
-        y = fight.get("fight_year")
-        if y is not None and int(y) >= cutoff:
-            return True
-    return False
+# Era and fight-history attributes (ufc_debut_year, fight_history) excluded until that data is populated; re-add when available.
+ERA_ATTRIBUTES: list[dict[str, Any]] = []
 
 
 # -----------------------------------------------------------------------------
@@ -171,45 +147,8 @@ GYM_ATTRIBUTES = [
     {"id": "gym_tiger_muay_thai", "label": "Tiger Muay Thai", "category": "gym", "requires_fight_history": False, "match_fn": lambda f: _gym_contains(f, "Tiger Muay Thai") or _gym_contains(f, "TMT")},
 ]
 
-# -----------------------------------------------------------------------------
-# Shared history (fight-based) — require fight_history list of dicts (event_name, fight_year, etc.)
-# -----------------------------------------------------------------------------
-def _fought_at_ufc_100(fighter: dict, fight_history: list[dict] | None = None) -> bool:
-    if not fight_history:
-        return False
-    for fight in fight_history:
-        ev = (fight.get("event_name") or "").strip()
-        if "UFC 100" in ev or ev == "UFC 100":
-            return True
-    return False
-
-
-def _main_evented_ppv(fighter: dict, fight_history: list[dict] | None = None) -> bool:
-    if not fight_history:
-        return False
-    for fight in fight_history:
-        ev = (fight.get("event_name") or "").strip().upper()
-        if "MAIN EVENT" in ev or "PPV" in ev or "Pay-Per-View" in ev:
-            return True
-    return False
-
-
-def _fought_for_title(fighter: dict, fight_history: list[dict] | None = None) -> bool:
-    if not fight_history:
-        return False
-    for fight in fight_history:
-        ev = (fight.get("event_name") or "").strip().lower()
-        wc = (fight.get("weight_class") or "").strip().lower()
-        if "title" in ev or "championship" in ev or "title" in wc:
-            return True
-    return False
-
-
-FIGHT_HISTORY_ATTRIBUTES = [
-    {"id": "fought_at_ufc_100", "label": "Fought at UFC 100", "category": "record", "requires_fight_history": True, "match_fn": _fought_at_ufc_100},
-    {"id": "main_evented_ppv", "label": "Main Evented a PPV", "category": "record", "requires_fight_history": True, "match_fn": _main_evented_ppv},
-    {"id": "fought_for_ufc_title", "label": "Fought for a UFC Title", "category": "record", "requires_fight_history": True, "match_fn": _fought_for_title},
-]
+# Fight-history attributes excluded until fight_history data is populated; re-add when available.
+FIGHT_HISTORY_ATTRIBUTES: list[dict[str, Any]] = []
 
 
 def match_attribute(fighter: dict, attr: dict, fight_history: list[dict] | None = None) -> bool:
