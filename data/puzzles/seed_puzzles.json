@@ -1,0 +1,20 @@
+{
+    "game_type": "grid",
+    "puzzle_date": "2026-02-21",
+    "difficulty": "normal",
+    "puzzle_data": {
+      "columns": ["American Top Team", "Brazilian", "Lightweight"],
+      "rows": ["Former Champion", "KO Artist (5+ KO wins)", "Active Fighter"],
+      "cells": {
+        "0,0": ["Amanda Nunes", "Dustin Poirier"],
+        "0,1": ["Jose Aldo", "Vitor Belfort"],
+        "0,2": ["Conor McGregor", "Khabib Nurmagomedov"],
+        "1,0": ["Andrei Arlovski", "Junior dos Santos"],
+        "1,1": ["Anderson Silva", "Charles Oliveira"],
+        "1,2": ["Justin Gaethje", "Dustin Poirier"],
+        "2,0": ["Arman Tsarukyan", "Bo Nickal"],
+        "2,1": ["Paulo Costa", "Alex Pereira"],
+        "2,2": ["Paddy Pimblett", "Ilia Topuria"]
+      }
+    }
+  }
