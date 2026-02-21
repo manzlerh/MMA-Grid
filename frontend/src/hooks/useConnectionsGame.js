@@ -103,6 +103,10 @@ export function useConnectionsGame(puzzle) {
     setFighters((prev) => fisherYatesShuffle(prev))
   }, [])
 
+  const deselectAll = useCallback(() => {
+    setSelectedIds(new Set())
+  }, [])
+
   return {
     fighters,
     selectedIds,
@@ -115,5 +119,6 @@ export function useConnectionsGame(puzzle) {
     toggleFighter,
     submitGuess,
     shuffleRemaining,
+    deselectAll,
   }
 }
