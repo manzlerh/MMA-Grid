@@ -125,10 +125,11 @@ def generate_grid_puzzle_interactive(
     difficulty: str = "normal",
     num_candidates: int = 5,
     index: dict | None = None,
+    silent: bool = False,
 ) -> list[dict]:
     """
-    Generate num_candidates candidate puzzles and print their stats so a human can pick one.
-    Returns the list of puzzle dicts.
+    Generate num_candidates candidate puzzles and optionally print their stats.
+    Returns the list of puzzle dicts. Set silent=True to skip printing (e.g. when caller formats output).
     """
     idx = index or get_index()
     available = _filter_attributes(idx, difficulty, None)
@@ -181,13 +182,14 @@ def generate_grid_puzzle_interactive(
     # Sort by quality_score descending
     puzzles.sort(key=lambda p: (p.get("quality_score") or 0), reverse=True)
 
-    print(f"\n--- {len(puzzles)} candidate puzzle(s) for difficulty={difficulty} ---\n")
-    for i, p in enumerate(puzzles, 1):
-        print(f"  Candidate {i}:")
-        print(f"    Rows: {[r['label'] for r in p['rows']]}")
-        print(f"    Cols: {[c['label'] for c in p['cols']]}")
-        print(f"    quality_score={p.get('quality_score')}, min_cell={p.get('min_cell_count')}, avg_cell={p.get('avg_cell_count')}, unique_fighters={p.get('total_unique_fighters')}")
-        print()
+    if not silent:
+        print(f"\n--- {len(puzzles)} candidate puzzle(s) for difficulty={difficulty} ---\n")
+        for i, p in enumerate(puzzles, 1):
+            print(f"  Candidate {i}:")
+            print(f"    Rows: {[r['label'] for r in p['rows']]}")
+            print(f"    Cols: {[c['label'] for c in p['cols']]}")
+            print(f"    quality_score={p.get('quality_score')}, min_cell={p.get('min_cell_count')}, avg_cell={p.get('avg_cell_count')}, unique_fighters={p.get('total_unique_fighters')}")
+            print()
     return puzzles
 
 
