@@ -1,0 +1,63 @@
+{
+    "game_type": "connections",
+    "puzzle_date": "2026-02-21",
+    "difficulty": "normal",
+    "puzzle_data": {
+      "categories": [
+        {
+          "name": "Two-Weight UFC Champion",
+          "fighters": [
+            "Conor McGregor",
+            "Daniel Cormier",
+            "Amanda Nunes",
+            "Henry Cejudo"
+          ]
+        },
+        {
+          "name": "Fought Conor McGregor",
+          "fighters": [
+            "Khabib Nurmagomedov",
+            "Nate Diaz",
+            "Dustin Poirier",
+            "Eddie Alvarez"
+          ]
+        },
+        {
+          "name": "UFC Heavyweight Champion",
+          "fighters": [
+            "Stipe Miocic",
+            "Francis Ngannou",
+            "Cain Velasquez",
+            "Junior dos Santos"
+          ]
+        },
+        {
+          "name": "From New Zealand",
+          "fighters": [
+            "Israel Adesanya",
+            "Dan Hooker",
+            "Kai Kara-France",
+            "Shane Young"
+          ]
+        }
+      ],
+      "all_fighters": [
+        "Conor McGregor",
+        "Daniel Cormier",
+        "Amanda Nunes",
+        "Henry Cejudo",
+        "Khabib Nurmagomedov",
+        "Nate Diaz",
+        "Dustin Poirier",
+        "Eddie Alvarez",
+        "Stipe Miocic",
+        "Francis Ngannou",
+        "Cain Velasquez",
+        "Junior dos Santos",
+        "Israel Adesanya",
+        "Dan Hooker",
+        "Kai Kara-France",
+        "Shane Young"
+      ]
+    }
+  }
