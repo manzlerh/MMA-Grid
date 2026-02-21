@@ -14,12 +14,16 @@ export async function searchFighters(query) {
 }
 
 /**
- * GET /daily?gameType={gameType}
+ * GET /daily?gameType={gameType}&date=YYYY-MM-DD
  * @param {'grid' | 'connections'} gameType
- * @returns {Promise<object>} puzzle object
+ * @param {{ date?: string }} [opts] optional date (YYYY-MM-DD); if omitted, client sends today UTC so server and client agree on "today"
+ * @returns {Promise<{ gameType, puzzle, difficulty, puzzleDate? }>}
  */
-export async function getDailyPuzzle(gameType) {
-  const { data } = await api.get('/daily', { params: { gameType } })
+export async function getDailyPuzzle(gameType, opts = {}) {
+  const params = { gameType }
+  if (opts.date) params.date = opts.date
+  else params.date = new Date().toISOString().slice(0, 10) // client's today in UTC
+  const { data } = await api.get('/daily', { params })
   return data
 }
 

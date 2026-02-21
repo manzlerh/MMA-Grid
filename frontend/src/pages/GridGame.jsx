@@ -22,6 +22,7 @@ export default function GridGame() {
   const { userId, streak, markGameCompleted } = useUser()
   const [puzzle, setPuzzle] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const completionHandled = useRef(false)
 
   const {
@@ -44,10 +45,16 @@ export default function GridGame() {
     let cancelled = false
     getDailyPuzzle('grid')
       .then((data) => {
-        if (!cancelled) setPuzzle(data?.puzzle ?? data ?? {})
+        if (cancelled) return
+        // Backend returns { gameType, puzzle, difficulty, puzzleDate }; puzzle is null when none for that date
+        const p = data?.puzzle ?? data
+        setPuzzle(p != null ? p : null)
       })
       .catch(() => {
-        if (!cancelled) setPuzzle({})
+        if (!cancelled) {
+          setPuzzle(null)
+          setLoadError(true)
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -86,6 +93,20 @@ export default function GridGame() {
           <span className="w-10 h-10 border-2 border-ufc-gold border-t-transparent rounded-full animate-spin" />
           <p className="text-ufc-muted">Loading today&apos;s puzzle...</p>
         </div>
+      </div>
+    )
+  }
+
+  if (puzzle === null) {
+    return (
+      <div className="min-h-screen bg-ufc-dark text-ufc-text">
+        <Navbar />
+        <main className="max-w-2xl mx-auto px-4 py-6 flex flex-col items-center justify-center min-h-[60vh]">
+          <h1 className="font-display text-2xl text-ufc-gold tracking-wide">DAILY GRID</h1>
+          <p className="text-ufc-muted mt-2">
+            {loadError ? 'Failed to load the puzzle. Check your connection and try again.' : 'No puzzle for today. Check back later or try another date.'}
+          </p>
+        </main>
       </div>
     )
   }
