@@ -13,6 +13,28 @@ const GROUP_COLORS = {
   purple: 'bg-purple-600 text-white',
 }
 
+const CONNECTIONS_COLOR_ORDER = ['yellow', 'green', 'blue', 'purple']
+
+/**
+ * Normalize API puzzle (categories + all_fighters with names) into shape expected by useConnectionsGame:
+ * groups with label, color, and fighters as { id, name } objects.
+ */
+function normalizeConnectionsPuzzle(raw) {
+  if (!raw || typeof raw !== 'object') return null
+  const categories = raw.categories
+  if (!Array.isArray(categories) || categories.length !== 4) return null
+  const groups = categories.map((cat, idx) => {
+    const names = Array.isArray(cat.fighters) ? cat.fighters : []
+    return {
+      label: cat.name ?? `Category ${idx + 1}`,
+      name: cat.name,
+      color: CONNECTIONS_COLOR_ORDER[idx] ?? 'yellow',
+      fighters: names.map((name) => ({ id: name, name })),
+    }
+  })
+  return { groups }
+}
+
 function todayFormatted() {
   return new Date().toLocaleDateString('en-US', {
     weekday: 'long',
@@ -50,10 +72,13 @@ export default function ConnectionsGame() {
     let cancelled = false
     getDailyPuzzle('connections')
       .then((data) => {
-        if (!cancelled) setPuzzle(data?.puzzle ?? data ?? {})
+        if (cancelled) return
+        const raw = data?.puzzle ?? data
+        const normalized = normalizeConnectionsPuzzle(raw) ?? (raw && typeof raw === 'object' ? raw : null)
+        setPuzzle(normalized)
       })
       .catch(() => {
-        if (!cancelled) setPuzzle({})
+        if (!cancelled) setPuzzle(null)
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -96,6 +121,18 @@ export default function ConnectionsGame() {
           </header>
           <ConnectionsSkeleton />
           <p className="text-center text-ufc-muted text-sm mt-4">Loading today&apos;s puzzle...</p>
+        </main>
+      </div>
+    )
+  }
+
+  if (puzzle == null || !puzzle.groups?.length) {
+    return (
+      <div className="min-h-screen bg-ufc-dark text-ufc-text">
+        <Navbar />
+        <main className="max-w-2xl mx-auto px-4 py-6 flex flex-col items-center justify-center min-h-[60vh]">
+          <h1 className="font-display text-2xl text-ufc-gold tracking-wide">DAILY CONNECTIONS</h1>
+          <p className="text-ufc-muted mt-2">No puzzle for today. Check back later.</p>
         </main>
       </div>
     )
