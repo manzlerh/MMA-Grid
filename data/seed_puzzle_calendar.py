@@ -114,9 +114,9 @@ def load_used_attributes(conn, start_date: date, end_date: date) -> dict[date, d
 def get_exclude_for_date(
     target_date: date,
     used_by_date: dict[date, dict],
-    window_days: int = 14,
+    window_days: int = 7,
 ) -> tuple[set[str], set[str]]:
-    """Exclude attribute ids used in [target_date - window_days, target_date - 1]."""
+    """Exclude attribute ids used in [target_date - window_days, target_date - 1]. Default 7 days to avoid over-excluding (pool is ~40 attrs)."""
     exclude_grid: set[str] = set()
     exclude_conn: set[str] = set()
     for i in range(1, window_days + 1):
@@ -145,6 +145,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Bulk-seed daily puzzles for a date range.")
     parser.add_argument("--start", required=True, help="Start date YYYY-MM-DD")
     parser.add_argument("--days", type=int, default=30, help="Number of days to seed (default 30)")
+    parser.add_argument(
+        "--exclude-days",
+        type=int,
+        default=7,
+        help="Days of attribute exclusion to avoid reuse (default 7). Use 0 to disable.",
+    )
     args = parser.parse_args()
     try:
         start_date = date.fromisoformat(args.start)
@@ -154,7 +160,8 @@ def main() -> None:
         sys.exit("--days must be >= 1")
 
     end_date = start_date + timedelta(days=args.days - 1)
-    window_start = start_date - timedelta(days=14)
+    exclude_days = max(0, args.exclude_days)
+    window_start = start_date - timedelta(days=exclude_days)
 
     conn = get_conn()
     try:
@@ -190,27 +197,37 @@ def main() -> None:
         if not need_grid and not need_connections:
             continue
 
-        exclude_grid, exclude_conn = get_exclude_for_date(d, used_by_date)
+        exclude_grid, exclude_conn = get_exclude_for_date(d, used_by_date, window_days=exclude_days)
 
         if need_grid:
             diff = grid_difficulty_for_date(d)
+            puzzle = None
             try:
-                puzzle = generate_grid_puzzle(
-                    difficulty=diff,
-                    max_attempts=max_attempts,
-                    exclude_attribute_ids=exclude_grid,
-                    index=grid_index,
-                )
-                data = puzzle_data_grid(puzzle)
-                conn = get_conn()
-                try:
-                    insert_puzzle(conn, "grid", d, data, diff)
-                    seeded_grid += 1
-                    used_by_date.setdefault(d, {"grid_ids": set(), "connections_ids": set()})
-                    used_by_date[d]["grid_ids"].update(data.get("row_attr_ids", []))
-                    used_by_date[d]["grid_ids"].update(data.get("col_attr_ids", []))
-                finally:
-                    conn.close()
+                for attempt_diff in [diff, "normal"] if diff != "normal" else [diff]:
+                    try:
+                        puzzle = generate_grid_puzzle(
+                            difficulty=attempt_diff,
+                            max_attempts=max_attempts,
+                            exclude_attribute_ids=exclude_grid if attempt_diff == diff else None,
+                            index=grid_index,
+                        )
+                        diff = attempt_diff
+                        break
+                    except PuzzleGenerationError:
+                        if attempt_diff == "normal":
+                            raise
+                        continue
+                if puzzle is not None:
+                    data = puzzle_data_grid(puzzle)
+                    conn = get_conn()
+                    try:
+                        insert_puzzle(conn, "grid", d, data, diff)
+                        seeded_grid += 1
+                        used_by_date.setdefault(d, {"grid_ids": set(), "connections_ids": set()})
+                        used_by_date[d]["grid_ids"].update(data.get("row_attr_ids", []))
+                        used_by_date[d]["grid_ids"].update(data.get("col_attr_ids", []))
+                    finally:
+                        conn.close()
             except PuzzleGenerationError as e:
                 failures.append((date_str, "grid", str(e)))
             except Exception as e:
@@ -218,22 +235,32 @@ def main() -> None:
 
         if need_connections:
             diff = connections_difficulty_for_day_index(day_offset)
+            puzzle = None
             try:
-                puzzle = generate_connections_puzzle(
-                    difficulty=diff,
-                    max_attempts=300,
-                    exclude_attribute_ids=exclude_conn,
-                    index=conn_index,
-                )
-                data = puzzle_data_connections(puzzle)
-                conn = get_conn()
-                try:
-                    insert_puzzle(conn, "connections", d, data, diff)
-                    seeded_connections += 1
-                    used_by_date.setdefault(d, {"grid_ids": set(), "connections_ids": set()})
-                    used_by_date[d]["connections_ids"].update(data.get("group_attr_ids", []))
-                finally:
-                    conn.close()
+                for attempt_diff in [diff, "normal"] if diff != "normal" else [diff]:
+                    try:
+                        puzzle = generate_connections_puzzle(
+                            difficulty=attempt_diff,
+                            max_attempts=300,
+                            exclude_attribute_ids=exclude_conn if attempt_diff == diff else None,
+                            index=conn_index,
+                        )
+                        diff = attempt_diff
+                        break
+                    except ValueError:
+                        if attempt_diff == "normal":
+                            raise
+                        continue
+                if puzzle is not None:
+                    data = puzzle_data_connections(puzzle)
+                    conn = get_conn()
+                    try:
+                        insert_puzzle(conn, "connections", d, data, diff)
+                        seeded_connections += 1
+                        used_by_date.setdefault(d, {"grid_ids": set(), "connections_ids": set()})
+                        used_by_date[d]["connections_ids"].update(data.get("group_attr_ids", []))
+                    finally:
+                        conn.close()
             except ValueError as e:
                 failures.append((date_str, "connections", str(e)))
             except Exception as e:
