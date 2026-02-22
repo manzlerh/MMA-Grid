@@ -28,13 +28,16 @@ export async function getDailyPuzzle(gameType, opts = {}) {
 }
 
 /**
- * POST /validate with body { cell: {row, col}, fighterName }
+ * POST /validate with body { cell: {row, col}, fighterName, puzzleDate? }
  * @param {{ row: number, col: number }} cell
  * @param {string} fighterName
+ * @param {{ puzzleDate?: string }} [opts] optional puzzleDate (YYYY-MM-DD) for preview mode
  * @returns {Promise<{ valid: boolean, fighter: object | null }>}
  */
-export async function validateGridAnswer(cell, fighterName) {
-  const { data } = await api.post('/validate', { cell, fighterName })
+export async function validateGridAnswer(cell, fighterName, opts = {}) {
+  const body = { cell, fighterName }
+  if (opts.puzzleDate) body.puzzleDate = opts.puzzleDate
+  const { data } = await api.post('/validate', body)
   return data
 }
 

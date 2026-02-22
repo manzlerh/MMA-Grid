@@ -48,11 +48,12 @@ function todayYYYYMMDD() {
   return new Date().toISOString().slice(0, 10)
 }
 
-export default function ConnectionsGame() {
+export default function ConnectionsGame({ previewDate }) {
   const { userId, streak, markGameCompleted } = useUser()
   const [puzzle, setPuzzle] = useState(null)
   const [loading, setLoading] = useState(true)
   const completionHandled = useRef(false)
+  const effectiveDate = previewDate || todayYYYYMMDD()
 
   const {
     fighters,
@@ -70,7 +71,7 @@ export default function ConnectionsGame() {
 
   useEffect(() => {
     let cancelled = false
-    getDailyPuzzle('connections')
+    getDailyPuzzle('connections', previewDate ? { date: previewDate } : {})
       .then((data) => {
         if (cancelled) return
         const raw = data?.puzzle ?? data
@@ -84,9 +85,10 @@ export default function ConnectionsGame() {
         if (!cancelled) setLoading(false)
       })
     return () => { cancelled = true }
-  }, [])
+  }, [previewDate])
 
   useEffect(() => {
+    if (previewDate) return // no score submission in preview
     if (!(gameWon || gameOver) || completionHandled.current || !userId) return
     completionHandled.current = true
     markGameCompleted('connections')
@@ -100,7 +102,7 @@ export default function ConnectionsGame() {
       completed: gameWon,
       attempts: mistakesUsed,
     }).catch(() => {})
-  }, [gameWon, gameOver, userId, mistakesLeft, markGameCompleted])
+  }, [gameWon, gameOver, userId, mistakesLeft, markGameCompleted, previewDate])
 
   const canSubmit = selectedIds.size === 4
   const showResultModal = gameWon || gameOver
@@ -143,7 +145,7 @@ export default function ConnectionsGame() {
       <Navbar />
       <main className="max-w-2xl mx-auto px-4 py-6">
         <header className="text-center mb-6">
-          <p className="text-ufc-muted text-sm">{todayFormatted()}</p>
+          <p className="text-ufc-muted text-sm">{previewDate ? effectiveDate : todayFormatted()}</p>
           <h1 className="font-display text-3xl text-ufc-gold tracking-wide mt-1">
             DAILY CONNECTIONS
           </h1>

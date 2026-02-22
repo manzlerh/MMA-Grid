@@ -7,7 +7,12 @@ const emptyBoard = () => [
   [null, null, null],
 ]
 
-export function useGridGame(puzzle) {
+/**
+ * @param {object} puzzle - daily puzzle data
+ * @param {{ puzzleDate?: string }} [options] - optional puzzleDate (YYYY-MM-DD) for preview validation
+ */
+export function useGridGame(puzzle, options = {}) {
+  const { puzzleDate } = options
   const [board, setBoard] = useState(emptyBoard)
   const [selectedCell, setSelectedCell] = useState(null)
   const [lockedCells, setLockedCells] = useState(() => new Set())
@@ -45,7 +50,8 @@ export function useGridGame(puzzle) {
       try {
         const { valid, fighter: validatedFighter } = await validateGridAnswer(
           { row, col },
-          fighter.name
+          fighter.name,
+          puzzleDate ? { puzzleDate } : {}
         )
         if (valid && validatedFighter) {
           setBoard((prev) => {
@@ -73,7 +79,7 @@ export function useGridGame(puzzle) {
         setIsValidating(false)
       }
     },
-    [selectedCell, gameOver, gameWon, attemptsLeft]
+    [selectedCell, gameOver, gameWon, attemptsLeft, puzzleDate]
   )
 
   const usedFighterNames = useMemo(() => {

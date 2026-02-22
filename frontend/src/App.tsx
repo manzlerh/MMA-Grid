@@ -1,5 +1,5 @@
 import { Routes, Route } from 'react-router-dom'
-import { Home, GridGame, ConnectionsGame } from './pages'
+import { Home, GridGame, ConnectionsGame, PreviewGame } from './pages'
 
 function App() {
   return (
@@ -7,6 +7,7 @@ function App() {
       <Route path="/" element={<Home />} />
       <Route path="/grid" element={<GridGame />} />
       <Route path="/connections" element={<ConnectionsGame />} />
+      <Route path="/preview/:gameType/:date" element={<PreviewGame />} />
     </Routes>
   )
 }

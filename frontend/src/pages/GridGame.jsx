@@ -18,12 +18,13 @@ function todayYYYYMMDD() {
   return new Date().toISOString().slice(0, 10)
 }
 
-export default function GridGame() {
+export default function GridGame({ previewDate }) {
   const { userId, streak, markGameCompleted } = useUser()
   const [puzzle, setPuzzle] = useState(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
   const completionHandled = useRef(false)
+  const effectiveDate = previewDate || todayYYYYMMDD()
 
   const {
     board,
@@ -39,11 +40,11 @@ export default function GridGame() {
     submitFighter,
     closeCell,
     usedFighterNames,
-  } = useGridGame(puzzle ?? {})
+  } = useGridGame(puzzle ?? {}, previewDate ? { puzzleDate: previewDate } : {})
 
   useEffect(() => {
     let cancelled = false
-    getDailyPuzzle('grid')
+    getDailyPuzzle('grid', previewDate ? { date: previewDate } : {})
       .then((data) => {
         if (cancelled) return
         // Backend returns { gameType, puzzle, difficulty, puzzleDate }; puzzle is null when none for that date
@@ -60,9 +61,10 @@ export default function GridGame() {
         if (!cancelled) setLoading(false)
       })
     return () => { cancelled = true }
-  }, [])
+  }, [previewDate])
 
   useEffect(() => {
+    if (previewDate) return // no score submission in preview
     if (!(gameWon || gameOver) || completionHandled.current || !userId) return
     completionHandled.current = true
     markGameCompleted('grid')
@@ -75,7 +77,7 @@ export default function GridGame() {
       completed: gameWon,
       attempts: 9 - attemptsLeft,
     }).catch(() => {})
-  }, [gameWon, gameOver, userId, score, attemptsLeft, markGameCompleted])
+  }, [gameWon, gameOver, userId, score, attemptsLeft, markGameCompleted, previewDate])
 
   const puzzleColumns = puzzle?.columns ?? ['', '', '']
   const puzzleRows = puzzle?.rows ?? ['', '', '']
@@ -83,7 +85,7 @@ export default function GridGame() {
   const colLabel = selectedCell != null ? puzzleColumns[selectedCell.col] : ''
   const showResultModal = gameWon || gameOver
   const shareText = gameWon
-    ? `UFC Grid ${todayYYYYMMDD()} ✅ Score: ${score}/900`
+    ? `UFC Grid ${effectiveDate} ✅ Score: ${score}/900`
     : ''
 
   if (loading) {
@@ -126,7 +128,7 @@ export default function GridGame() {
       <Navbar />
       <main className="max-w-2xl mx-auto px-4 py-6">
         <header className="text-center mb-6">
-          <p className="text-ufc-muted text-sm">{todayFormatted()}</p>
+          <p className="text-ufc-muted text-sm">{previewDate ? effectiveDate : todayFormatted()}</p>
           <h1 className="font-display text-3xl text-ufc-gold tracking-wide mt-1">DAILY GRID</h1>
           <div className="flex items-center justify-center gap-1 mt-3" aria-label={`${attemptsLeft} attempts left`}>
             {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
