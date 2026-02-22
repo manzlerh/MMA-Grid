@@ -1,0 +1,35 @@
+name: Refresh fighter data
+
+on:
+  schedule:
+    # Every Monday at 06:00 UTC
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r data/requirements.txt
+
+      - name: Run data refresh
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: python data/refresh_fighters.py
+
+      - name: Create issue on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TITLE="Data refresh failed - $(date -u +%Y-%m-%d)"
+          BODY="The weekly data refresh workflow failed. Check the [run logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})."
+          gh issue create --title "$TITLE" --body "$BODY"
