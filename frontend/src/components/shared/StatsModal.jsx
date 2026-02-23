@@ -1,6 +1,18 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from 'recharts'
 import { useUser } from '../../context'
 import Modal from './Modal'
+
+const BAR_COLOR_COMPLETED = '#C79B2E'
+const BAR_COLOR_FAILED = '#D20A0A'
 
 function formatPuzzleDate(isoDate) {
   if (!isoDate) return '—'
@@ -10,6 +22,45 @@ function formatPuzzleDate(isoDate) {
   } catch {
     return isoDate
   }
+}
+
+function shortDateLabel(isoDate) {
+  if (!isoDate) return ''
+  try {
+    const d = new Date(isoDate + 'T12:00:00')
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  } catch {
+    return isoDate
+  }
+}
+
+/**
+ * Build chart data from recentGames: group by date, max score per date, last 14 days.
+ * @param {Array<{ puzzleDate: string, score: number, completed: boolean }>} recentGames
+ * @returns {Array<{ date: string, dateFull: string, score: number, completed: boolean }>}
+ */
+function buildScoreHistoryData(recentGames) {
+  if (!Array.isArray(recentGames) || recentGames.length === 0) return []
+  const byDate = new Map()
+  for (const g of recentGames) {
+    const d = g.puzzleDate
+    if (!d) continue
+    const score = g.score != null && !Number.isNaN(Number(g.score)) ? Number(g.score) : 0
+    const existing = byDate.get(d)
+    if (!existing) {
+      byDate.set(d, { date: d, score, completed: !!g.completed })
+    } else {
+      if (score > existing.score) existing.score = score
+      if (g.completed) existing.completed = true
+    }
+  }
+  const sorted = [...byDate.entries()].sort((a, b) => b[0].localeCompare(a[0])).slice(0, 14)
+  return sorted.reverse().map(([, v]) => ({
+    date: shortDateLabel(v.date),
+    dateFull: formatPuzzleDate(v.date),
+    score: v.score,
+    completed: v.completed,
+  }))
 }
 
 function StatBox({ label, value, loading }) {
@@ -55,6 +106,8 @@ export default function StatsModal({ isOpen, onClose }) {
   const [activeTab, setActiveTab] = useState('grid')
 
   const recentGames = stats?.recentGames ?? []
+  const chartData = useMemo(() => buildScoreHistoryData(recentGames), [recentGames])
+  const showChart = chartData.length >= 3
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Your Stats">
@@ -150,6 +203,56 @@ export default function StatsModal({ isOpen, onClose }) {
               </ul>
             )}
           </div>
+        </div>
+
+        {/* Section 4 — Score history (last 14 days) */}
+        <div>
+          <p className="text-ufc-muted text-xs uppercase tracking-wider mb-2">Score history (last 14 days)</p>
+          {statsLoading ? (
+            <div className="h-[120px] rounded-lg bg-ufc-card border border-ufc-border flex items-center justify-center">
+              <div className="h-16 w-full max-w-[80%] bg-ufc-border rounded animate-pulse" />
+            </div>
+          ) : !showChart ? (
+            <div className="h-[120px] rounded-lg bg-ufc-card border border-ufc-border flex items-center justify-center">
+              <p className="text-ufc-muted text-sm">Play more games to see your history</p>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-ufc-border bg-ufc-card p-2" style={{ height: 120 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fill: '#9ca3af', fontSize: 10 }}
+                    tickLine={false}
+                    axisLine={{ stroke: '#374151' }}
+                  />
+                  <YAxis hide />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: 8 }}
+                    labelStyle={{ color: '#d4af37' }}
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.length) return null
+                      const p = payload[0].payload
+                      return (
+                        <div className="px-2 py-1 text-sm">
+                          <p className="text-ufc-gold font-medium">{p.dateFull}</p>
+                          <p className="text-ufc-text">Score: {p.score}</p>
+                        </div>
+                      )
+                    }}
+                  />
+                  <Bar dataKey="score" radius={4} maxBarSize={32}>
+                    {chartData.map((entry, index) => (
+                      <Cell
+                        key={index}
+                        fill={entry.completed ? BAR_COLOR_COMPLETED : BAR_COLOR_FAILED}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
       </div>
     </Modal>
