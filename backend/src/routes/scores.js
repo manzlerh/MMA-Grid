@@ -4,28 +4,34 @@ const router = express.Router();
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
+const GRACE_HOURS = 26;
+const GRACE_MS = GRACE_HOURS * 60 * 60 * 1000;
+
 function todayUTC() {
   return new Date().toISOString().slice(0, 10);
 }
 
 /**
- * Compute consecutive days with at least one completed game going back from today.
- * @param {string[]} completedDates - sorted unique dates (YYYY-MM-DD) when user completed at least one game
- * @param {string} fromDate - start date (e.g. today UTC)
+ * Compute current streak using a 26-hour grace window per "day".
+ * For each 26-hour window going backwards from now, if the user has any completed
+ * game with played_at in that window, the streak continues. Gives ~2h leeway across timezones.
+ * @param {Array<Date|string|number>} playedAtList - played_at timestamps of completed games
+ * @param {number} [nowMs] - current time in ms (default Date.now())
  * @returns {number}
  */
-function computeStreakFrom(completedDates, fromDate) {
-  const set = new Set(completedDates);
+function computeStreakWithGrace(playedAtList, nowMs = Date.now()) {
+  const timestamps = playedAtList
+    .map((t) => (t instanceof Date ? t.getTime() : typeof t === 'number' ? t : new Date(t).getTime()))
+    .filter((t) => !Number.isNaN(t));
+  if (timestamps.length === 0) return 0;
   let streak = 0;
-  let d = new Date(fromDate + 'T12:00:00Z');
+  let windowEnd = nowMs;
   while (true) {
-    const key = d.toISOString().slice(0, 10);
-    if (set.has(key)) {
-      streak++;
-      d.setUTCDate(d.getUTCDate() - 1);
-    } else {
-      break;
-    }
+    const windowStart = windowEnd - GRACE_MS;
+    const hasPlayInWindow = timestamps.some((ts) => ts > windowStart && ts <= windowEnd);
+    if (!hasPlayInWindow) break;
+    streak++;
+    windowEnd = windowStart;
   }
   return streak;
 }
@@ -130,16 +136,15 @@ router.post('/', async (req, res) => {
     const scoreId = insertResult.rows[0].id;
 
     const sixtyDaysSql = `
-      SELECT DISTINCT puzzle_date::text AS d
+      SELECT played_at
       FROM user_scores
       WHERE anonymous_user_id = $1::uuid
         AND completed = true
-        AND puzzle_date >= (CURRENT_DATE - INTERVAL '60 days')
-      ORDER BY d DESC
+        AND played_at >= (NOW() - INTERVAL '60 days')
     `;
     const sixtyResult = await pool.query(sixtyDaysSql, [anonymousUserId]);
-    const completedDates = sixtyResult.rows.map((r) => r.d);
-    const streak = computeStreakFrom(completedDates, todayUTC());
+    const playedAtList = sixtyResult.rows.map((r) => r.played_at);
+    const streak = computeStreakWithGrace(playedAtList);
 
     return res.status(201).json({ success: true, streak, scoreId });
   } catch (err) {
@@ -189,8 +194,9 @@ router.get('/stats/:anonymousUserId', async (req, res) => {
     const totalGamesCompleted = rows.filter((r) => r.completed).length;
     const completionRate = totalGamesPlayed ? Math.round((100 * totalGamesCompleted) / totalGamesPlayed) : 0;
 
+    const completedPlayedAts = rows.filter((r) => r.completed).map((r) => r.played_at);
+    const currentStreak = computeStreakWithGrace(completedPlayedAts);
     const completedDates = [...new Set(rows.filter((r) => r.completed).map((r) => r.puzzle_date))];
-    const currentStreak = computeStreakFrom(completedDates, todayUTC());
     const longestStreak = longestConsecutiveDayStreak(completedDates);
 
     function gameStats(list) {

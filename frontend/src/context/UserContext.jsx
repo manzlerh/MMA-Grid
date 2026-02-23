@@ -3,6 +3,17 @@ import { getUserStats, submitScore } from '../services/api'
 
 const USER_ID_KEY = 'ufc_user_id'
 const DAILY_STATUS_KEY = 'ufc_daily_status'
+const BEST_STREAK_KEY = 'ufc_best_streak'
+
+function syncBestStreakToStorage(currentStreak) {
+  if (currentStreak == null || currentStreak < 0) return
+  try {
+    const raw = localStorage.getItem(BEST_STREAK_KEY)
+    const best = raw != null ? parseInt(raw, 10) : 0
+    const next = Math.max(Number.isNaN(best) ? 0 : best, currentStreak)
+    localStorage.setItem(BEST_STREAK_KEY, String(next))
+  } catch (_) {}
+}
 
 const INITIAL_STATS = {
   totalGamesPlayed: 0,
@@ -76,6 +87,7 @@ export function UserProvider({ children }) {
     try {
       const data = await getUserStats(userId)
       setStats(data)
+      if (data?.currentStreak != null) syncBestStreakToStorage(data.currentStreak)
     } catch (_) {
       // Silent fallback — leave stats as-is; localStorage-backed UI still works
     } finally {
@@ -93,6 +105,7 @@ export function UserProvider({ children }) {
         const data = await submitScore(payload)
         if (data?.streak != null) {
           setStats((prev) => ({ ...prev, currentStreak: data.streak }))
+          syncBestStreakToStorage(data.streak)
         }
         await fetchStats()
       } catch (err) {
