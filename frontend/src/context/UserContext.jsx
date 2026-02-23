@@ -1,7 +1,19 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { getUserStats, submitScore } from '../services/api'
 
 const USER_ID_KEY = 'ufc_user_id'
 const DAILY_STATUS_KEY = 'ufc_daily_status'
+
+const INITIAL_STATS = {
+  totalGamesPlayed: 0,
+  totalGamesCompleted: 0,
+  completionRate: 0,
+  currentStreak: 0,
+  longestStreak: 0,
+  gridStats: {},
+  connectionsStats: {},
+  recentGames: [],
+}
 
 function todayString() {
   return new Date().toISOString().slice(0, 10) // YYYY-MM-DD
@@ -31,6 +43,8 @@ export function UserProvider({ children }) {
   const [gamesPlayed, setGamesPlayed] = useState(0)
   const [lastPlayedDate, setLastPlayedDate] = useState('')
   const [todayCompleted, setTodayCompleted] = useState({ grid: false, connections: false })
+  const [stats, setStats] = useState(INITIAL_STATS)
+  const [statsLoading, setStatsLoading] = useState(false)
 
   useEffect(() => {
     let id = localStorage.getItem(USER_ID_KEY)
@@ -56,6 +70,39 @@ export function UserProvider({ children }) {
     }
   }, [])
 
+  const fetchStats = useCallback(async () => {
+    if (!userId) return
+    setStatsLoading(true)
+    try {
+      const data = await getUserStats(userId)
+      setStats(data)
+    } catch (_) {
+      // Silent fallback — leave stats as-is; localStorage-backed UI still works
+    } finally {
+      setStatsLoading(false)
+    }
+  }, [userId])
+
+  useEffect(() => {
+    if (userId) fetchStats()
+  }, [userId, fetchStats])
+
+  const saveScore = useCallback(
+    async (payload) => {
+      try {
+        const data = await submitScore(payload)
+        if (data?.streak != null) {
+          setStats((prev) => ({ ...prev, currentStreak: data.streak }))
+        }
+        await fetchStats()
+      } catch (err) {
+        console.error('Failed to save score:', err)
+        // Don't surface to user; markGameCompleted still updates local state
+      }
+    },
+    [fetchStats]
+  )
+
   const markGameCompleted = useCallback((gameType) => {
     if (gameType !== 'grid' && gameType !== 'connections') return
     const today = todayString()
@@ -75,6 +122,10 @@ export function UserProvider({ children }) {
     lastPlayedDate,
     todayCompleted,
     markGameCompleted,
+    stats,
+    fetchStats,
+    saveScore,
+    statsLoading,
   }
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>
