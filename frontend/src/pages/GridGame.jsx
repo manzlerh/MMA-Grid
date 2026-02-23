@@ -3,8 +3,11 @@ import { getDailyPuzzle, getDailyLeaderboard } from '../services/api'
 import { useUser } from '../context'
 import { useGridGame } from '../hooks'
 import { generateGridShareText } from '../utils/shareText'
+import { getStoredResult, setStoredResult } from '../utils/storedResult'
 import { Navbar, ResultModal, StatsModal } from '../components/shared'
 import { GridBoard, CellModal, GridSkeleton } from '../components/grid'
+
+const ALL_GRID_CELLS = new Set(['0,0', '0,1', '0,2', '1,0', '1,1', '1,2', '2,0', '2,1', '2,2'])
 
 function todayFormatted() {
   return new Date().toLocaleDateString('en-US', {
@@ -19,8 +22,20 @@ function todayYYYYMMDD() {
   return new Date().toISOString().slice(0, 10)
 }
 
+function getNextPuzzleCountdown() {
+  const now = new Date()
+  const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+  const nextMidnightUTC = new Date(todayUTC.getTime() + 24 * 60 * 60 * 1000)
+  const ms = nextMidnightUTC.getTime() - Date.now()
+  if (ms <= 0) return '0:00:00'
+  const s = Math.floor(ms / 1000) % 60
+  const m = Math.floor(ms / 60000) % 60
+  const h = Math.floor(ms / 3600000)
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+}
+
 export default function GridGame({ previewDate }) {
-  const { userId, streak, markGameCompleted, saveScore } = useUser()
+  const { userId, todayCompleted, markGameCompleted, saveScore } = useUser()
   const [puzzle, setPuzzle] = useState(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
@@ -30,6 +45,9 @@ export default function GridGame({ previewDate }) {
   const [resultModalOpen, setResultModalOpen] = useState(false)
   const [statsModalOpen, setStatsModalOpen] = useState(false)
   const [finalTimeSeconds, setFinalTimeSeconds] = useState(null)
+  const [alreadyPlayed, setAlreadyPlayed] = useState(false)
+  const [storedResult, setStoredResultState] = useState(null)
+  const [countdown, setCountdown] = useState('0:00:00')
   const effectiveDate = previewDate || todayYYYYMMDD()
 
   const {
@@ -71,6 +89,32 @@ export default function GridGame({ previewDate }) {
   }, [previewDate])
 
   useEffect(() => {
+    if (previewDate || !puzzle) return
+    const completed = todayCompleted?.grid || getStoredResult('grid', effectiveDate)
+    if (completed) {
+      setAlreadyPlayed(true)
+      setStoredResultState(getStoredResult('grid', effectiveDate))
+      setResultModalOpen(true)
+    }
+  }, [puzzle, previewDate, effectiveDate, todayCompleted?.grid])
+
+  useEffect(() => {
+    if (!alreadyPlayed) return
+    const tick = () => setCountdown(getNextPuzzleCountdown())
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [alreadyPlayed])
+
+  useEffect(() => {
+    if (alreadyPlayed && effectiveDate) {
+      getDailyLeaderboard('grid', effectiveDate)
+        .then((data) => setDailyStats(data ?? null))
+        .catch(() => {})
+    }
+  }, [alreadyPlayed, effectiveDate])
+
+  useEffect(() => {
     if (previewDate) return // no score submission in preview
     if (!(gameWon || gameOver) || completionHandled.current || !userId) return
     completionHandled.current = true
@@ -81,19 +125,35 @@ export default function GridGame({ previewDate }) {
         ? Math.floor((Date.now() - gameStartTime.current) / 1000)
         : undefined
     setFinalTimeSeconds(timeSeconds ?? null)
+    const attempts = 9 - attemptsLeft
+    const shareTextForStorage = generateGridShareText({
+      won: gameWon,
+      score,
+      attempts,
+      board,
+      puzzleDate: effectiveDate,
+    })
+    setStoredResult('grid', puzzleDate, {
+      score,
+      attempts,
+      won: gameWon,
+      shareText: shareTextForStorage,
+      completedAt: new Date().toISOString(),
+      board: board.map((row) => row.map((c) => (c ? { name: c.name } : null))),
+    })
     saveScore({
       anonymousUserId: userId,
       gameType: 'grid',
       puzzleDate,
       score,
       completed: gameWon,
-      attempts: 9 - attemptsLeft,
+      attempts,
       timeSeconds,
     })
       .then(() => getDailyLeaderboard('grid', puzzleDate))
       .then((data) => setDailyStats(data ?? null))
       .catch(() => {})
-  }, [gameWon, gameOver, userId, score, attemptsLeft, markGameCompleted, saveScore, previewDate])
+  }, [gameWon, gameOver, userId, score, attemptsLeft, markGameCompleted, saveScore, previewDate, board, effectiveDate])
 
   const puzzleColumns = puzzle?.columns ?? ['', '', '']
   const puzzleRows = puzzle?.rows ?? ['', '', '']
@@ -150,61 +210,89 @@ export default function GridGame({ previewDate }) {
     )
   }
 
+  const displayBoard = alreadyPlayed && storedResult?.board ? storedResult.board : board
+  const resultForModal = alreadyPlayed ? storedResult : null
+
   return (
     <div className="min-h-screen bg-ufc-dark text-ufc-text">
       <Navbar />
       <main className="max-w-2xl mx-auto px-4 py-6">
+        {alreadyPlayed && (
+          <div className="mb-6 rounded-lg bg-ufc-card border border-ufc-border p-4 space-y-3">
+            <h2 className="font-display text-xl text-ufc-gold tracking-wide text-center">
+              YOU ALREADY PLAYED TODAY
+            </h2>
+            {resultForModal?.shareText && (
+              <pre className="p-3 rounded bg-ufc-dark text-ufc-text text-xs md:text-sm overflow-x-auto whitespace-pre-wrap font-sans border border-ufc-border">
+                {resultForModal.shareText}
+              </pre>
+            )}
+            {resultForModal && (
+              <p className="text-ufc-muted text-sm text-center">
+                Score: {resultForModal.score} | Attempts: {resultForModal.attempts}/9
+              </p>
+            )}
+            <p className="text-ufc-muted text-xs text-center">
+              Next puzzle in: <span className="font-display text-ufc-gold tabular-nums">{countdown}</span>
+            </p>
+          </div>
+        )}
+
         <header className="text-center mb-6">
           <p className="text-ufc-muted text-sm">{previewDate ? effectiveDate : todayFormatted()}</p>
           <h1 className="font-display text-3xl text-ufc-gold tracking-wide mt-1">DAILY GRID</h1>
-          <div className="flex items-center justify-center gap-1 mt-3" aria-label={`${attemptsLeft} attempts left`}>
-            {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-              <span
-                key={i}
-                className="w-4 h-4 flex items-center justify-center text-xs"
-                title={i < attemptsLeft ? 'Attempt remaining' : 'Used'}
-              >
-                {i < attemptsLeft ? (
-                  <svg viewBox="0 0 24 24" className="w-4 h-4 text-ufc-gold fill-current" aria-hidden>
-                    <polygon points="12 2 22 8 22 16 12 22 2 16 2 8" stroke="currentColor" strokeWidth="1.5" fill="currentColor" />
-                  </svg>
-                ) : (
-                  <svg viewBox="0 0 24 24" className="w-4 h-4 text-ufc-muted" aria-hidden>
-                    <polygon points="12 2 22 8 22 16 12 22 2 16 2 8" stroke="currentColor" strokeWidth="1.5" fill="none" />
-                  </svg>
-                )}
-              </span>
-            ))}
-          </div>
+          {!alreadyPlayed && (
+            <div className="flex items-center justify-center gap-1 mt-3" aria-label={`${attemptsLeft} attempts left`}>
+              {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                <span
+                  key={i}
+                  className="w-4 h-4 flex items-center justify-center text-xs"
+                  title={i < attemptsLeft ? 'Attempt remaining' : 'Used'}
+                >
+                  {i < attemptsLeft ? (
+                    <svg viewBox="0 0 24 24" className="w-4 h-4 text-ufc-gold fill-current" aria-hidden>
+                      <polygon points="12 2 22 8 22 16 12 22 2 16 2 8" stroke="currentColor" strokeWidth="1.5" fill="currentColor" />
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" className="w-4 h-4 text-ufc-muted" aria-hidden>
+                      <polygon points="12 2 22 8 22 16 12 22 2 16 2 8" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                    </svg>
+                  )}
+                </span>
+              ))}
+            </div>
+          )}
         </header>
 
         <GridBoard
           puzzle={puzzle ?? {}}
-          board={board}
-          onCellClick={selectCell}
-          lockedCells={lockedCells}
-          shakingCell={lastFailedCell}
+          board={displayBoard}
+          onCellClick={alreadyPlayed ? () => {} : selectCell}
+          lockedCells={alreadyPlayed ? ALL_GRID_CELLS : lockedCells}
+          shakingCell={alreadyPlayed ? null : lastFailedCell}
         />
 
-        <CellModal
-          isOpen={selectedCell != null}
-          onClose={closeCell}
-          rowLabel={rowLabel}
-          colLabel={colLabel}
-          onFighterSelect={submitFighter}
-          excludeNames={usedFighterNames}
-        />
+        {!alreadyPlayed && (
+          <CellModal
+            isOpen={selectedCell != null}
+            onClose={closeCell}
+            rowLabel={rowLabel}
+            colLabel={colLabel}
+            onFighterSelect={submitFighter}
+            excludeNames={usedFighterNames}
+          />
+        )}
 
         <ResultModal
           isOpen={resultModalOpen}
           onClose={() => setResultModalOpen(false)}
           gameType="grid"
-          won={gameWon}
-          score={score}
-          attempts={9 - attemptsLeft}
-          timeSeconds={finalTimeSeconds ?? undefined}
+          won={resultForModal?.won ?? gameWon}
+          score={resultForModal?.score ?? score}
+          attempts={resultForModal?.attempts ?? 9 - attemptsLeft}
+          timeSeconds={resultForModal ? undefined : (finalTimeSeconds ?? undefined)}
           dailyStats={dailyStats}
-          shareText={shareText}
+          shareText={resultForModal?.shareText ?? shareText}
           onViewStats={() => {
             setResultModalOpen(false)
             setStatsModalOpen(true)
