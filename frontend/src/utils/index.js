@@ -1,2 +1,1 @@
-// Helper functions
-export {}
+export { generateGridShareText, generateConnectionsShareText } from './shareText'
