@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { getDailyPuzzle, getDailyLeaderboard } from '../services/api'
 import { useUser } from '../context'
 import { useGridGame } from '../hooks'
-import { Navbar, Modal, ShareButton } from '../components/shared'
+import { generateGridShareText } from '../utils/shareText'
+import { Navbar, ResultModal, StatsModal } from '../components/shared'
 import { GridBoard, CellModal, GridSkeleton } from '../components/grid'
 
 function todayFormatted() {
@@ -26,6 +27,9 @@ export default function GridGame({ previewDate }) {
   const completionHandled = useRef(false)
   const gameStartTime = useRef(null)
   const [dailyStats, setDailyStats] = useState(null)
+  const [resultModalOpen, setResultModalOpen] = useState(false)
+  const [statsModalOpen, setStatsModalOpen] = useState(false)
+  const [finalTimeSeconds, setFinalTimeSeconds] = useState(null)
   const effectiveDate = previewDate || todayYYYYMMDD()
 
   const {
@@ -76,6 +80,7 @@ export default function GridGame({ previewDate }) {
       gameStartTime.current != null
         ? Math.floor((Date.now() - gameStartTime.current) / 1000)
         : undefined
+    setFinalTimeSeconds(timeSeconds ?? null)
     saveScore({
       anonymousUserId: userId,
       gameType: 'grid',
@@ -95,9 +100,20 @@ export default function GridGame({ previewDate }) {
   const rowLabel = selectedCell != null ? puzzleRows[selectedCell.row] : ''
   const colLabel = selectedCell != null ? puzzleColumns[selectedCell.col] : ''
   const showResultModal = gameWon || gameOver
-  const shareText = gameWon
-    ? `UFC Grid ${effectiveDate} ✅ Score: ${score}/900`
-    : ''
+  useEffect(() => {
+    if (showResultModal) setResultModalOpen(true)
+  }, [showResultModal])
+
+  const shareText =
+    showResultModal
+      ? generateGridShareText({
+          won: gameWon,
+          score,
+          attempts: 9 - attemptsLeft,
+          board,
+          puzzleDate: effectiveDate,
+        })
+      : ''
 
   if (loading) {
     return (
@@ -179,49 +195,22 @@ export default function GridGame({ previewDate }) {
           excludeNames={usedFighterNames}
         />
 
-        {showResultModal && (
-          <Modal isOpen onClose={() => {}} title={null}>
-            <div className="space-y-4">
-              <h2 className="font-display text-2xl text-ufc-gold">
-                {gameWon ? 'GREAT WORK!' : 'GAME OVER'}
-              </h2>
-              {gameWon ? (
-                <>
-                  <p className="text-ufc-text">Score: {score}/900</p>
-                  <ShareButton resultText={shareText} />
-                </>
-              ) : (
-                <div>
-                  <p className="text-ufc-muted text-sm mb-2">Correct answers:</p>
-                  <div className="grid grid-cols-3 gap-2 text-sm">
-                    {(puzzle?.solution?.flat() ?? board.flat()).map((f, i) => (
-                      <div
-                        key={i}
-                        className="bg-ufc-border rounded p-2 text-ufc-text truncate"
-                        title={typeof f === 'string' ? f : f?.name}
-                      >
-                        {typeof f === 'string' ? f : (f?.name ?? '—')}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {dailyStats != null && (
-                <div className="rounded-lg bg-ufc-card border border-ufc-border p-3 text-sm text-ufc-muted">
-                  <p className="font-display text-ufc-gold text-xs uppercase tracking-wide mb-2">
-                    How others did
-                  </p>
-                  <p>
-                    {dailyStats.totalPlayers} played • {dailyStats.completionRate}% completed
-                    {dailyStats.avgScore != null && ` • Avg score ${dailyStats.avgScore}`}
-                  </p>
-                </div>
-              )}
-              <p className="text-ufc-muted text-sm">Streak: {streak} day{streak !== 1 ? 's' : ''}</p>
-              <p className="text-ufc-muted text-sm">Come back tomorrow</p>
-            </div>
-          </Modal>
-        )}
+        <ResultModal
+          isOpen={resultModalOpen}
+          onClose={() => setResultModalOpen(false)}
+          gameType="grid"
+          won={gameWon}
+          score={score}
+          attempts={9 - attemptsLeft}
+          timeSeconds={finalTimeSeconds ?? undefined}
+          dailyStats={dailyStats}
+          shareText={shareText}
+          onViewStats={() => {
+            setResultModalOpen(false)
+            setStatsModalOpen(true)
+          }}
+        />
+        <StatsModal isOpen={statsModalOpen} onClose={() => setStatsModalOpen(false)} />
       </main>
     </div>
   )

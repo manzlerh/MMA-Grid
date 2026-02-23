@@ -3,7 +3,8 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { getDailyPuzzle, getDailyLeaderboard } from '../services/api'
 import { useUser } from '../context'
 import { useConnectionsGame } from '../hooks'
-import { Navbar, Modal, ShareButton } from '../components/shared'
+import { generateConnectionsShareText } from '../utils/shareText'
+import { Navbar, ResultModal, StatsModal } from '../components/shared'
 import { ConnectionsBoard, MistakeTracker, ConnectionsSkeleton } from '../components/connections'
 
 const GROUP_COLORS = {
@@ -55,6 +56,9 @@ export default function ConnectionsGame({ previewDate }) {
   const completionHandled = useRef(false)
   const gameStartTime = useRef(null)
   const [dailyStats, setDailyStats] = useState(null)
+  const [resultModalOpen, setResultModalOpen] = useState(false)
+  const [statsModalOpen, setStatsModalOpen] = useState(false)
+  const [finalTimeSeconds, setFinalTimeSeconds] = useState(null)
   const effectiveDate = previewDate || todayYYYYMMDD()
 
   const {
@@ -97,11 +101,12 @@ export default function ConnectionsGame({ previewDate }) {
     markGameCompleted('connections')
     const puzzleDate = todayYYYYMMDD()
     const mistakesUsed = 5 - mistakesLeft
-    const score = gameWon ? Math.max(0, 1000 - 150 * mistakesUsed) : 0
     const timeSeconds =
       gameStartTime.current != null
         ? Math.floor((Date.now() - gameStartTime.current) / 1000)
         : undefined
+    setFinalTimeSeconds(timeSeconds ?? null)
+    const score = gameWon ? Math.max(0, 1000 - 150 * mistakesUsed) : 0
     saveScore({
       anonymousUserId: userId,
       gameType: 'connections',
@@ -118,10 +123,21 @@ export default function ConnectionsGame({ previewDate }) {
 
   const canSubmit = selectedIds.size === 4
   const showResultModal = gameWon || gameOver
-  const groupsToReveal = gameWon ? solvedGroups : (puzzle?.groups ?? [])
-  const shareText = gameWon
-    ? `UFC Connections ${todayYYYYMMDD()} ✅ 4/4`
-    : ''
+  const mistakesUsed = 5 - mistakesLeft
+  const connectionsScore = gameWon ? Math.max(0, 1000 - 150 * mistakesUsed) : 0
+  useEffect(() => {
+    if (showResultModal) setResultModalOpen(true)
+  }, [showResultModal])
+
+  const shareText =
+    showResultModal
+      ? generateConnectionsShareText({
+          won: gameWon,
+          mistakes: mistakesUsed,
+          solvedGroups,
+          puzzleDate: effectiveDate,
+        })
+      : ''
 
   if (loading) {
     return (
@@ -220,50 +236,22 @@ export default function ConnectionsGame({ previewDate }) {
           )}
         </AnimatePresence>
 
-        {showResultModal && (
-          <Modal isOpen onClose={() => {}} title={null}>
-            <div className="space-y-4">
-              <h2 className="font-display text-2xl text-ufc-gold">
-                {gameWon ? 'GREAT WORK!' : 'GAME OVER'}
-              </h2>
-              <div className="space-y-2">
-                {groupsToReveal.map((group, idx) => (
-                  <div
-                    key={group.label ?? idx}
-                    className={`rounded-lg px-4 py-2 ${GROUP_COLORS[group.color] ?? GROUP_COLORS.yellow}`}
-                  >
-                    <p className="font-display text-xs uppercase tracking-wide opacity-90">
-                      {group.label ?? 'Group'}
-                    </p>
-                    <p className="text-sm mt-0.5">
-                      {(group.fighters ?? []).map((f) => f.name).join(' · ')}
-                    </p>
-                  </div>
-                ))}
-              </div>
-              {gameWon && (
-                <>
-                  <ShareButton resultText={shareText} />
-                </>
-              )}
-              {dailyStats != null && (
-                <div className="rounded-lg bg-ufc-card border border-ufc-border p-3 text-sm text-ufc-muted">
-                  <p className="font-display text-ufc-gold text-xs uppercase tracking-wide mb-2">
-                    How others did
-                  </p>
-                  <p>
-                    {dailyStats.totalPlayers} played • {dailyStats.completionRate}% completed
-                    {dailyStats.avgScore != null && ` • Avg score ${dailyStats.avgScore}`}
-                  </p>
-                </div>
-              )}
-              <p className="text-ufc-muted text-sm">
-                Streak: {streak} day{streak !== 1 ? 's' : ''}
-              </p>
-              <p className="text-ufc-muted text-sm">Come back tomorrow</p>
-            </div>
-          </Modal>
-        )}
+        <ResultModal
+          isOpen={resultModalOpen}
+          onClose={() => setResultModalOpen(false)}
+          gameType="connections"
+          won={gameWon}
+          score={connectionsScore}
+          attempts={mistakesUsed}
+          timeSeconds={finalTimeSeconds ?? undefined}
+          dailyStats={dailyStats}
+          shareText={shareText}
+          onViewStats={() => {
+            setResultModalOpen(false)
+            setStatsModalOpen(true)
+          }}
+        />
+        <StatsModal isOpen={statsModalOpen} onClose={() => setStatsModalOpen(false)} />
       </main>
     </div>
   )
