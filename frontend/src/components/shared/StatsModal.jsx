@@ -150,9 +150,9 @@ export default function StatsModal({ isOpen, onClose }) {
             </div>
           ) : (
             <div className="rounded-lg bg-ufc-card border border-ufc-border p-4">
-              <GameBreakdown(
-                activeTab === 'grid' ? stats?.gridStats : stats?.connectionsStats
-              )}
+              <GameBreakdown
+                stats={activeTab === 'grid' ? stats?.gridStats : stats?.connectionsStats}
+              />
             </div>
           )}
         </div>
