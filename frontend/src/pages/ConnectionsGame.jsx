@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { getDailyPuzzle, submitScore } from '../services/api'
+import { getDailyPuzzle, getDailyLeaderboard } from '../services/api'
 import { useUser } from '../context'
 import { useConnectionsGame } from '../hooks'
 import { Navbar, Modal, ShareButton } from '../components/shared'
@@ -49,10 +49,12 @@ function todayYYYYMMDD() {
 }
 
 export default function ConnectionsGame({ previewDate }) {
-  const { userId, streak, markGameCompleted } = useUser()
+  const { userId, streak, markGameCompleted, saveScore } = useUser()
   const [puzzle, setPuzzle] = useState(null)
   const [loading, setLoading] = useState(true)
   const completionHandled = useRef(false)
+  const gameStartTime = useRef(null)
+  const [dailyStats, setDailyStats] = useState(null)
   const effectiveDate = previewDate || todayYYYYMMDD()
 
   const {
@@ -77,6 +79,7 @@ export default function ConnectionsGame({ previewDate }) {
         const raw = data?.puzzle ?? data
         const normalized = normalizeConnectionsPuzzle(raw) ?? (raw && typeof raw === 'object' ? raw : null)
         setPuzzle(normalized)
+        if (normalized) gameStartTime.current = Date.now()
       })
       .catch(() => {
         if (!cancelled) setPuzzle(null)
@@ -94,15 +97,24 @@ export default function ConnectionsGame({ previewDate }) {
     markGameCompleted('connections')
     const puzzleDate = todayYYYYMMDD()
     const mistakesUsed = 5 - mistakesLeft
-    submitScore({
+    const score = gameWon ? Math.max(0, 1000 - 150 * mistakesUsed) : 0
+    const timeSeconds =
+      gameStartTime.current != null
+        ? Math.floor((Date.now() - gameStartTime.current) / 1000)
+        : undefined
+    saveScore({
       anonymousUserId: userId,
       gameType: 'connections',
       puzzleDate,
-      score: gameWon ? 4 : 0,
+      score,
       completed: gameWon,
       attempts: mistakesUsed,
-    }).catch(() => {})
-  }, [gameWon, gameOver, userId, mistakesLeft, markGameCompleted, previewDate])
+      timeSeconds,
+    })
+      .then(() => getDailyLeaderboard('connections', puzzleDate))
+      .then((data) => setDailyStats(data ?? null))
+      .catch(() => {})
+  }, [gameWon, gameOver, userId, mistakesLeft, markGameCompleted, saveScore, previewDate])
 
   const canSubmit = selectedIds.size === 4
   const showResultModal = gameWon || gameOver
@@ -233,6 +245,17 @@ export default function ConnectionsGame({ previewDate }) {
                 <>
                   <ShareButton resultText={shareText} />
                 </>
+              )}
+              {dailyStats != null && (
+                <div className="rounded-lg bg-ufc-card border border-ufc-border p-3 text-sm text-ufc-muted">
+                  <p className="font-display text-ufc-gold text-xs uppercase tracking-wide mb-2">
+                    How others did
+                  </p>
+                  <p>
+                    {dailyStats.totalPlayers} played • {dailyStats.completionRate}% completed
+                    {dailyStats.avgScore != null && ` • Avg score ${dailyStats.avgScore}`}
+                  </p>
+                </div>
               )}
               <p className="text-ufc-muted text-sm">
                 Streak: {streak} day{streak !== 1 ? 's' : ''}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { getDailyPuzzle, submitScore } from '../services/api'
+import { getDailyPuzzle, getDailyLeaderboard } from '../services/api'
 import { useUser } from '../context'
 import { useGridGame } from '../hooks'
 import { Navbar, Modal, ShareButton } from '../components/shared'
@@ -19,11 +19,13 @@ function todayYYYYMMDD() {
 }
 
 export default function GridGame({ previewDate }) {
-  const { userId, streak, markGameCompleted } = useUser()
+  const { userId, streak, markGameCompleted, saveScore } = useUser()
   const [puzzle, setPuzzle] = useState(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
   const completionHandled = useRef(false)
+  const gameStartTime = useRef(null)
+  const [dailyStats, setDailyStats] = useState(null)
   const effectiveDate = previewDate || todayYYYYMMDD()
 
   const {
@@ -50,6 +52,7 @@ export default function GridGame({ previewDate }) {
         // Backend returns { gameType, puzzle, difficulty, puzzleDate }; puzzle is null when none for that date
         const p = data?.puzzle ?? data
         setPuzzle(p != null ? p : null)
+        if (p) gameStartTime.current = Date.now()
       })
       .catch(() => {
         if (!cancelled) {
@@ -69,15 +72,23 @@ export default function GridGame({ previewDate }) {
     completionHandled.current = true
     markGameCompleted('grid')
     const puzzleDate = todayYYYYMMDD()
-    submitScore({
+    const timeSeconds =
+      gameStartTime.current != null
+        ? Math.floor((Date.now() - gameStartTime.current) / 1000)
+        : undefined
+    saveScore({
       anonymousUserId: userId,
       gameType: 'grid',
       puzzleDate,
       score,
       completed: gameWon,
       attempts: 9 - attemptsLeft,
-    }).catch(() => {})
-  }, [gameWon, gameOver, userId, score, attemptsLeft, markGameCompleted, previewDate])
+      timeSeconds,
+    })
+      .then(() => getDailyLeaderboard('grid', puzzleDate))
+      .then((data) => setDailyStats(data ?? null))
+      .catch(() => {})
+  }, [gameWon, gameOver, userId, score, attemptsLeft, markGameCompleted, saveScore, previewDate])
 
   const puzzleColumns = puzzle?.columns ?? ['', '', '']
   const puzzleRows = puzzle?.rows ?? ['', '', '']
@@ -193,6 +204,17 @@ export default function GridGame({ previewDate }) {
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
+              {dailyStats != null && (
+                <div className="rounded-lg bg-ufc-card border border-ufc-border p-3 text-sm text-ufc-muted">
+                  <p className="font-display text-ufc-gold text-xs uppercase tracking-wide mb-2">
+                    How others did
+                  </p>
+                  <p>
+                    {dailyStats.totalPlayers} played • {dailyStats.completionRate}% completed
+                    {dailyStats.avgScore != null && ` • Avg score ${dailyStats.avgScore}`}
+                  </p>
                 </div>
               )}
               <p className="text-ufc-muted text-sm">Streak: {streak} day{streak !== 1 ? 's' : ''}</p>

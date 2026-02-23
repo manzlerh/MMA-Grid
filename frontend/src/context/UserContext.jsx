@@ -98,6 +98,7 @@ export function UserProvider({ children }) {
       } catch (err) {
         console.error('Failed to save score:', err)
         // Don't surface to user; markGameCompleted still updates local state
+        throw err
       }
     },
     [fetchStats]

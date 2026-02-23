@@ -60,3 +60,14 @@ export async function getUserStats(anonymousUserId) {
   const { data } = await api.get(`/scores/stats/${anonymousUserId}`)
   return data
 }
+
+/**
+ * GET /scores/daily/{gameType}/{puzzleDate}
+ * @param {'grid' | 'connections'} gameType
+ * @param {string} puzzleDate YYYY-MM-DD
+ * @returns {Promise<{ totalPlayers, completionRate, avgScore, scoreDistribution, avgAttempts }>}
+ */
+export async function getDailyLeaderboard(gameType, puzzleDate) {
+  const { data } = await api.get(`/scores/daily/${gameType}/${puzzleDate}`)
+  return data
+}
