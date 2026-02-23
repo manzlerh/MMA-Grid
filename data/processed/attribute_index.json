@@ -3777,9 +3777,145 @@
       "Heather Clark",
       "Aisling Daly"
     ],
-    "former_ufc_champion": [],
+    "former_ufc_champion": [
+      "Alexander Volkanovski",
+      "Justin Gaethje",
+      "Sean O'Malley",
+      "Rose Namajunas",
+      "Deiveson Figueiredo",
+      "Merab Dvalishvili",
+      "Petr Yan",
+      "Alexandre Pantoja",
+      "Joshua Van",
+      "Brandon Moreno",
+      "Henry Cejudo",
+      "Jan Blachowicz",
+      "Belal Muhammad",
+      "Jack Della Maddalena",
+      "Islam Makhachev",
+      "Valentina Shevchenko",
+      "Zhang Weili",
+      "Leon Edwards",
+      "Tom Aspinall",
+      "Ciryl Gane",
+      "Mackenzie Dern",
+      "HyunSung Park",
+      "Charles Oliveira",
+      "Magomed Ankalaev",
+      "Alex Pereira",
+      "Jiri Prochazka",
+      "Aljamain Sterling",
+      "SuYoung You",
+      "Dricus Du Plessis",
+      "Khamzat Chimaev",
+      "Jessica Andrade",
+      "Rinya Nakamura",
+      "Robert Whittaker",
+      "Max Holloway",
+      "Dustin Poirier",
+      "Ilia Topuria",
+      "Jamahal Hill",
+      "Kamaru Usman",
+      "Cody Garbrandt",
+      "Julianna Pena",
+      "Kayla Harrison",
+      "Jose Aldo",
+      "Alexa Grasso",
+      "JeongYeong Lee",
+      "Miesha Tate",
+      "Yair Rodriguez",
+      "Sean Strickland",
+      "Anshul Jubli",
+      "Israel Adesanya",
+      "Colby Covington",
+      "Chris Weidman",
+      "Jon Jones",
+      "Stipe Miocic",
+      "Rafael Dos Anjos",
+      "Raquel Pennington",
+      "Carla Esparza",
+      "Tony Ferguson",
+      "Andrei Arlovski",
+      "Holly Holm",
+      "Germaine de Randamie",
+      "Robbie Lawler",
+      "Amanda Nunes",
+      "Glover Teixeira",
+      "Mauricio Rua",
+      "Frankie Edgar",
+      "TJ Dillashaw",
+      "Luke Rockhold",
+      "Dominick Cruz",
+      "Joanna Jedrzejczyk",
+      "Francis Ngannou",
+      "Conor McGregor",
+      "Carlos Condit",
+      "Tyron Woodley",
+      "Anthony Pettis",
+      "Junior Dos Santos",
+      "Anderson Silva",
+      "Khabib Nurmagomedov",
+      "Daniel Cormier",
+      "Fabricio Werdum",
+      "Renan Barao",
+      "Cristiane Justino",
+      "BJ Penn",
+      "Cain Velasquez",
+      "Demetrious Johnson",
+      "Eddie Alvarez",
+      "Rashad Evans",
+      "Vitor Belfort",
+      "Lyoto Machida",
+      "Michael Bisping",
+      "Georges St-Pierre",
+      "Johny Hendricks",
+      "Ronda Rousey",
+      "Dan Henderson",
+      "Josh Barnett",
+      "Brock Lesnar",
+      "Frank Mir",
+      "Benson Henderson",
+      "Antonio Rodrigo Nogueira",
+      "Quinton Jackson",
+      "Rich Franklin",
+      "Forrest Griffin",
+      "Tito Ortiz",
+      "Matt Hughes",
+      "Shane Carwin",
+      "Randy Couture",
+      "Matt Serra",
+      "Sean Sherk",
+      "Chuck Liddell",
+      "Mark Coleman",
+      "Evan Tanner",
+      "Tim Sylvia",
+      "Jens Pulver",
+      "Dave Menne",
+      "Carlos Newton",
+      "Ricco Rodriguez",
+      "Murilo Bustamante",
+      "Pat Miletich",
+      "Kevin Randleman",
+      "Maurice Smith",
+      "Frank Shamrock",
+      "Guy Mezger",
+      "Kevin Jackson",
+      "Mark Kerr"
+    ],
     "current_ufc_champion": [],
-    "two_division_champion": [],
+    "two_division_champion": [
+      "Henry Cejudo",
+      "Islam Makhachev",
+      "Alex Pereira",
+      "Ilia Topuria",
+      "Jon Jones",
+      "Amanda Nunes",
+      "Conor McGregor",
+      "Daniel Cormier",
+      "BJ Penn",
+      "Georges St-Pierre",
+      "Randy Couture"
+    ],
     "undefeated_in_ufc": [
       "Farid Basharat",
       "Quillan Salkilld",
@@ -8135,6 +8271,7 @@
       "brazilian_fighter",
       "competed_bantamweight",
       "competed_flyweight",
+      "former_ufc_champion",
       "ufc_wins_10_plus",
       "orthodox_stance",
       "wrestler_style"
@@ -8166,6 +8303,7 @@
     "Alexandre Pantoja": [
       "brazilian_fighter",
       "competed_flyweight",
+      "former_ufc_champion",
       "won_by_sub_5_plus",
       "ufc_wins_10_plus",
       "orthodox_stance",
@@ -8307,6 +8445,7 @@
       "brazilian_fighter",
       "competed_lightweight",
       "competed_featherweight",
+      "former_ufc_champion",
       "won_by_sub_5_plus",
       "ufc_wins_10_plus",
       "ufc_wins_20_plus",
@@ -8343,6 +8482,8 @@
       "brazilian_fighter",
       "competed_light_heavyweight",
       "competed_middleweight",
+      "former_ufc_champion",
+      "two_division_champion",
       "won_by_ko_5_plus",
       "ufc_wins_10_plus",
       "orthodox_stance",
@@ -8426,6 +8567,7 @@
     "Jessica Andrade": [
       "brazilian_fighter",
       "competed_strawweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "decision_specialist",
       "ufc_wins_10_plus",
@@ -8558,6 +8700,7 @@
       "brazilian_fighter",
       "competed_featherweight",
       "competed_bantamweight",
+      "former_ufc_champion",
       "decision_specialist",
       "ufc_wins_10_plus",
       "orthodox_stance",
@@ -8631,6 +8774,7 @@
       "american_fighter",
       "competed_welterweight",
       "competed_lightweight",
+      "former_ufc_champion",
       "won_by_sub_5_plus",
       "decision_specialist",
       "ufc_wins_10_plus",
@@ -8743,6 +8887,8 @@
     ],
     "Amanda Nunes": [
       "brazilian_fighter",
+      "former_ufc_champion",
+      "two_division_champion",
       "won_by_ko_5_plus",
       "ufc_wins_10_plus",
       "orthodox_stance",
@@ -8772,6 +8918,7 @@
     "Glover Teixeira": [
       "brazilian_fighter",
       "competed_light_heavyweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "won_by_sub_5_plus",
       "ufc_wins_10_plus",
@@ -8781,6 +8928,7 @@
     "Mauricio Rua": [
       "brazilian_fighter",
       "competed_light_heavyweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "ufc_wins_10_plus",
       "orthodox_stance",
@@ -8990,6 +9138,7 @@
     "Junior Dos Santos": [
       "brazilian_fighter",
       "competed_heavyweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "ufc_wins_10_plus",
       "orthodox_stance",
@@ -9013,6 +9162,7 @@
       "brazilian_fighter",
       "competed_light_heavyweight",
       "competed_middleweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "ufc_wins_10_plus",
       "southpaw_stance",
@@ -9036,6 +9186,7 @@
     "Fabricio Werdum": [
       "brazilian_fighter",
       "competed_heavyweight",
+      "former_ufc_champion",
       "ufc_wins_10_plus",
       "orthodox_stance",
       "wrestler_style"
@@ -9077,6 +9228,7 @@
       "brazilian_fighter",
       "competed_featherweight",
       "competed_bantamweight",
+      "former_ufc_champion",
       "orthodox_stance",
       "wrestler_style"
     ],
@@ -9089,6 +9241,7 @@
     ],
     "Cristiane Justino": [
       "brazilian_fighter",
+      "former_ufc_champion",
       "orthodox_stance",
       "striker_style"
     ],
@@ -9204,6 +9357,7 @@
       "competed_heavyweight",
       "competed_light_heavyweight",
       "competed_middleweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "ufc_wins_10_plus",
       "southpaw_stance",
@@ -9213,6 +9367,7 @@
       "brazilian_fighter",
       "competed_light_heavyweight",
       "competed_middleweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "decision_specialist",
       "ufc_wins_10_plus",
@@ -9456,6 +9611,7 @@
     "Antonio Rodrigo Nogueira": [
       "brazilian_fighter",
       "competed_heavyweight",
+      "former_ufc_champion",
       "orthodox_stance",
       "wrestler_style"
     ],
@@ -9707,6 +9863,7 @@
       "brazilian_fighter",
       "competed_light_heavyweight",
       "competed_middleweight",
+      "former_ufc_champion",
       "orthodox_stance",
       "wrestler_style"
     ],
@@ -9769,6 +9926,7 @@
     "Justin Gaethje": [
       "american_fighter",
       "competed_lightweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "ufc_wins_10_plus",
       "orthodox_stance",
@@ -9777,6 +9935,7 @@
     "Sean O'Malley": [
       "american_fighter",
       "competed_bantamweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "ufc_wins_10_plus"
     ],
@@ -9792,6 +9951,7 @@
     "Rose Namajunas": [
       "american_fighter",
       "competed_strawweight",
+      "former_ufc_champion",
       "ufc_wins_10_plus",
       "orthodox_stance",
       "wrestler_style"
@@ -9849,6 +10009,7 @@
       "american_fighter",
       "georgian_fighter",
       "competed_bantamweight",
+      "former_ufc_champion",
       "decision_specialist",
       "ufc_wins_10_plus",
       "orthodox_stance",
@@ -9857,6 +10018,7 @@
     "Joshua Van": [
       "american_fighter",
       "competed_flyweight",
+      "former_ufc_champion",
       "orthodox_stance",
       "wrestler_style"
     ],
@@ -9864,6 +10026,8 @@
       "american_fighter",
       "competed_bantamweight",
       "competed_flyweight",
+      "former_ufc_champion",
+      "two_division_champion",
       "ufc_wins_10_plus",
       "orthodox_stance",
       "wrestler_style"
@@ -9907,6 +10071,7 @@
     "Belal Muhammad": [
       "american_fighter",
       "competed_welterweight",
+      "former_ufc_champion",
       "decision_specialist",
       "ufc_wins_10_plus",
       "orthodox_stance",
@@ -10077,6 +10242,7 @@
     "Mackenzie Dern": [
       "american_fighter",
       "competed_strawweight",
+      "former_ufc_champion",
       "won_by_sub_5_plus",
       "ufc_wins_10_plus",
       "orthodox_stance",
@@ -10344,6 +10510,7 @@
       "american_fighter",
       "competed_featherweight",
       "competed_bantamweight",
+      "former_ufc_champion",
       "decision_specialist",
       "ufc_wins_10_plus",
       "orthodox_stance",
@@ -10492,6 +10659,7 @@
       "american_fighter",
       "competed_lightweight",
       "competed_featherweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "decision_specialist",
       "ufc_wins_10_plus",
@@ -10503,6 +10671,7 @@
       "american_fighter",
       "competed_lightweight",
       "competed_featherweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "ufc_wins_10_plus",
       "ufc_wins_20_plus",
@@ -10604,6 +10773,7 @@
     "Jamahal Hill": [
       "american_fighter",
       "competed_light_heavyweight",
+      "former_ufc_champion",
       "southpaw_stance",
       "striker_style"
     ],
@@ -10619,6 +10789,7 @@
       "nigerian_fighter",
       "competed_middleweight",
       "competed_welterweight",
+      "former_ufc_champion",
       "decision_specialist",
       "ufc_wins_10_plus",
       "wrestler_style"
@@ -10641,6 +10812,7 @@
       "american_fighter",
       "competed_bantamweight",
       "competed_flyweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "orthodox_stance",
       "striker_style"
@@ -10682,11 +10854,13 @@
     ],
     "Julianna Pena": [
       "american_fighter",
+      "former_ufc_champion",
       "orthodox_stance",
       "wrestler_style"
     ],
     "Kayla Harrison": [
       "american_fighter",
+      "former_ufc_champion",
       "undefeated_in_ufc",
       "never_been_finished",
       "southpaw_stance",
@@ -10739,6 +10913,7 @@
     "JeongYeong Lee": [
       "american_fighter",
       "competed_featherweight",
+      "former_ufc_champion",
       "orthodox_stance",
       "wrestler_style"
     ],
@@ -10752,6 +10927,7 @@
     ],
     "Miesha Tate": [
       "american_fighter",
+      "former_ufc_champion",
       "orthodox_stance",
       "wrestler_style"
     ],
@@ -10906,6 +11082,7 @@
       "competed_light_heavyweight",
       "competed_middleweight",
       "competed_welterweight",
+      "former_ufc_champion",
       "decision_specialist",
       "ufc_wins_10_plus",
       "orthodox_stance",
@@ -10949,6 +11126,7 @@
     "Colby Covington": [
       "american_fighter",
       "competed_welterweight",
+      "former_ufc_champion",
       "ufc_wins_10_plus",
       "orthodox_stance",
       "wrestler_style"
@@ -10988,6 +11166,7 @@
       "american_fighter",
       "competed_light_heavyweight",
       "competed_middleweight",
+      "former_ufc_champion",
       "ufc_wins_10_plus",
       "orthodox_stance",
       "wrestler_style"
@@ -11006,6 +11185,8 @@
       "american_fighter",
       "competed_heavyweight",
       "competed_light_heavyweight",
+      "former_ufc_champion",
+      "two_division_champion",
       "won_by_ko_5_plus",
       "won_by_sub_5_plus",
       "decision_specialist",
@@ -11017,6 +11198,7 @@
     "Stipe Miocic": [
       "american_fighter",
       "competed_heavyweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "ufc_wins_10_plus",
       "orthodox_stance",
@@ -11089,6 +11271,7 @@
     ],
     "Raquel Pennington": [
       "american_fighter",
+      "former_ufc_champion",
       "decision_specialist",
       "ufc_wins_10_plus",
       "orthodox_stance",
@@ -11107,6 +11290,7 @@
     "Carla Esparza": [
       "american_fighter",
       "competed_strawweight",
+      "former_ufc_champion",
       "decision_specialist",
       "ufc_wins_10_plus",
       "orthodox_stance",
@@ -11150,6 +11334,7 @@
       "american_fighter",
       "competed_welterweight",
       "competed_lightweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "won_by_sub_5_plus",
       "ufc_wins_10_plus",
@@ -11239,6 +11424,7 @@
     ],
     "Holly Holm": [
       "american_fighter",
+      "former_ufc_champion",
       "southpaw_stance",
       "wrestler_style",
       "gym_jackson_wink"
@@ -11404,6 +11590,7 @@
       "american_fighter",
       "competed_middleweight",
       "competed_welterweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "ufc_wins_10_plus",
       "southpaw_stance"
@@ -11561,6 +11748,7 @@
       "competed_lightweight",
       "competed_featherweight",
       "competed_bantamweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "decision_specialist",
       "ufc_wins_10_plus",
@@ -11601,6 +11789,7 @@
       "american_fighter",
       "competed_bantamweight",
       "competed_flyweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "ufc_wins_10_plus",
       "orthodox_stance"
@@ -11642,6 +11831,7 @@
       "american_fighter",
       "competed_light_heavyweight",
       "competed_middleweight",
+      "former_ufc_champion",
       "southpaw_stance",
       "wrestler_style",
       "gym_aka"
@@ -11649,6 +11839,7 @@
     "Dominick Cruz": [
       "american_fighter",
       "competed_bantamweight",
+      "former_ufc_champion",
       "orthodox_stance",
       "wrestler_style"
     ],
@@ -12013,6 +12204,7 @@
     "Carlos Condit": [
       "american_fighter",
       "competed_welterweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "orthodox_stance"
     ],
@@ -12117,6 +12309,7 @@
     "Tyron Woodley": [
       "american_fighter",
       "competed_welterweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "orthodox_stance",
       "gym_american_top_team"
@@ -12172,6 +12365,7 @@
       "competed_welterweight",
       "competed_lightweight",
       "competed_featherweight",
+      "former_ufc_champion",
       "ufc_wins_10_plus",
       "orthodox_stance",
       "wrestler_style"
@@ -12279,6 +12473,8 @@
       "american_fighter",
       "competed_heavyweight",
       "competed_light_heavyweight",
+      "former_ufc_champion",
+      "two_division_champion",
       "ufc_wins_10_plus",
       "orthodox_stance",
       "wrestler_style",
@@ -12538,6 +12734,8 @@
       "competed_welterweight",
       "competed_lightweight",
       "competed_featherweight",
+      "former_ufc_champion",
+      "two_division_champion",
       "won_by_ko_5_plus",
       "ufc_wins_10_plus",
       "orthodox_stance"
@@ -12604,6 +12802,7 @@
     "Cain Velasquez": [
       "american_fighter",
       "competed_heavyweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "ufc_wins_10_plus",
       "orthodox_stance",
@@ -12784,6 +12983,7 @@
       "american_fighter",
       "competed_bantamweight",
       "competed_flyweight",
+      "former_ufc_champion",
       "won_by_sub_5_plus",
       "decision_specialist",
       "ufc_wins_10_plus",
@@ -12799,6 +12999,7 @@
     "Eddie Alvarez": [
       "american_fighter",
       "competed_lightweight",
+      "former_ufc_champion",
       "orthodox_stance",
       "wrestler_style"
     ],
@@ -12832,6 +13033,7 @@
       "american_fighter",
       "competed_light_heavyweight",
       "competed_middleweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "decision_specialist",
       "ufc_wins_10_plus",
@@ -12948,6 +13150,7 @@
       "american_fighter",
       "competed_middleweight",
       "competed_welterweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "decision_specialist",
       "ufc_wins_10_plus",
@@ -13083,6 +13286,7 @@
     ],
     "Ronda Rousey": [
       "american_fighter",
+      "former_ufc_champion",
       "orthodox_stance",
       "wrestler_style"
     ],
@@ -13171,6 +13375,7 @@
       "american_fighter",
       "competed_light_heavyweight",
       "competed_middleweight",
+      "former_ufc_champion",
       "orthodox_stance",
       "wrestler_style"
     ],
@@ -13196,6 +13401,7 @@
     "Josh Barnett": [
       "american_fighter",
       "competed_heavyweight",
+      "former_ufc_champion",
       "orthodox_stance"
     ],
     "Kevin Casey": [
@@ -13267,6 +13473,7 @@
       "american_fighter",
       "canadian_fighter",
       "competed_heavyweight",
+      "former_ufc_champion",
       "orthodox_stance",
       "wrestler_style"
     ],
@@ -13310,6 +13517,7 @@
     "Frank Mir": [
       "american_fighter",
       "competed_heavyweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "won_by_sub_5_plus",
       "ufc_wins_10_plus",
@@ -13408,6 +13616,7 @@
       "american_fighter",
       "competed_welterweight",
       "competed_lightweight",
+      "former_ufc_champion",
       "decision_specialist",
       "ufc_wins_10_plus",
       "southpaw_stance",
@@ -13584,6 +13793,7 @@
     "Quinton Jackson": [
       "american_fighter",
       "competed_light_heavyweight",
+      "former_ufc_champion",
       "orthodox_stance",
       "wrestler_style"
     ],
@@ -14124,6 +14334,7 @@
       "american_fighter",
       "competed_light_heavyweight",
       "competed_middleweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "ufc_wins_10_plus",
       "southpaw_stance",
@@ -14189,6 +14400,7 @@
     "Forrest Griffin": [
       "american_fighter",
       "competed_light_heavyweight",
+      "former_ufc_champion",
       "ufc_wins_10_plus",
       "orthodox_stance",
       "wrestler_style"
@@ -14198,6 +14410,7 @@
       "competed_light_heavyweight",
       "competed_middleweight",
       "competed_lightweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "ufc_wins_10_plus",
       "orthodox_stance"
@@ -14362,6 +14575,7 @@
       "american_fighter",
       "competed_welterweight",
       "competed_lightweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "won_by_sub_5_plus",
       "ufc_wins_10_plus",
@@ -14407,6 +14621,7 @@
     "Shane Carwin": [
       "american_fighter",
       "competed_heavyweight",
+      "former_ufc_champion",
       "orthodox_stance",
       "striker_style",
       "gym_jackson_wink"
@@ -14427,6 +14642,8 @@
       "american_fighter",
       "competed_heavyweight",
       "competed_light_heavyweight",
+      "former_ufc_champion",
+      "two_division_champion",
       "won_by_ko_5_plus",
       "ufc_wins_10_plus",
       "orthodox_stance",
@@ -14550,6 +14767,7 @@
       "american_fighter",
       "competed_welterweight",
       "competed_lightweight",
+      "former_ufc_champion",
       "orthodox_stance",
       "wrestler_style"
     ],
@@ -14557,6 +14775,7 @@
       "american_fighter",
       "competed_welterweight",
       "competed_lightweight",
+      "former_ufc_champion",
       "orthodox_stance",
       "wrestler_style"
     ],
@@ -14602,6 +14821,7 @@
       "american_fighter",
       "competed_light_heavyweight",
       "competed_middleweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "ufc_wins_10_plus",
       "orthodox_stance",
@@ -14670,6 +14890,7 @@
       "american_fighter",
       "competed_heavyweight",
       "competed_light_heavyweight",
+      "former_ufc_champion",
       "orthodox_stance",
       "wrestler_style"
     ],
@@ -14899,6 +15120,7 @@
       "american_fighter",
       "competed_light_heavyweight",
       "competed_middleweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "ufc_wins_10_plus",
       "orthodox_stance",
@@ -14934,6 +15156,7 @@
     "Tim Sylvia": [
       "american_fighter",
       "competed_heavyweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "orthodox_stance"
     ],
@@ -14953,6 +15176,7 @@
     "Jens Pulver": [
       "american_fighter",
       "competed_lightweight",
+      "former_ufc_champion",
       "southpaw_stance",
       "wrestler_style"
     ],
@@ -15011,6 +15235,7 @@
       "competed_middleweight",
       "competed_welterweight",
       "competed_lightweight",
+      "former_ufc_champion",
       "orthodox_stance",
       "wrestler_style"
     ],
@@ -15137,6 +15362,7 @@
     "Ricco Rodriguez": [
       "american_fighter",
       "competed_heavyweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "orthodox_stance",
       "striker_style"
@@ -15176,6 +15402,7 @@
       "competed_middleweight",
       "competed_welterweight",
       "competed_lightweight",
+      "former_ufc_champion",
       "orthodox_stance",
       "wrestler_style"
     ],
@@ -15189,6 +15416,7 @@
       "american_fighter",
       "competed_heavyweight",
       "competed_light_heavyweight",
+      "former_ufc_champion",
       "orthodox_stance",
       "wrestler_style"
     ],
@@ -15207,6 +15435,7 @@
     "Maurice Smith": [
       "american_fighter",
       "competed_heavyweight",
+      "former_ufc_champion",
       "orthodox_stance",
       "wrestler_style"
     ],
@@ -15244,6 +15473,7 @@
     "Frank Shamrock": [
       "american_fighter",
       "competed_light_heavyweight",
+      "former_ufc_champion",
       "undefeated_in_ufc",
       "never_been_finished",
       "orthodox_stance",
@@ -15259,6 +15489,7 @@
       "american_fighter",
       "competed_middleweight",
       "competed_lightweight",
+      "former_ufc_champion",
       "orthodox_stance",
       "wrestler_style"
     ],
@@ -15281,6 +15512,7 @@
       "competed_light_heavyweight",
       "competed_middleweight",
       "competed_lightweight",
+      "former_ufc_champion",
       "wrestler_style"
     ],
     "Joe Charles": [
@@ -15292,6 +15524,7 @@
     "Mark Kerr": [
       "american_fighter",
       "competed_heavyweight",
+      "former_ufc_champion",
       "undefeated_in_ufc",
       "never_been_finished",
       "wrestler_style"
@@ -15389,6 +15622,7 @@
     "Petr Yan": [
       "russian_fighter",
       "competed_bantamweight",
+      "former_ufc_champion",
       "decision_specialist",
       "ufc_wins_10_plus",
       "wrestler_style",
@@ -15441,6 +15675,8 @@
       "russian_fighter",
       "competed_welterweight",
       "competed_lightweight",
+      "former_ufc_champion",
+      "two_division_champion",
       "won_by_sub_5_plus",
       "ufc_wins_10_plus",
       "southpaw_stance",
@@ -15492,6 +15728,7 @@
     "Magomed Ankalaev": [
       "russian_fighter",
       "competed_light_heavyweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "ufc_wins_10_plus",
       "orthodox_stance",
@@ -15667,6 +15904,7 @@
     "Khabib Nurmagomedov": [
       "russian_fighter",
       "competed_lightweight",
+      "former_ufc_champion",
       "undefeated_in_ufc",
       "won_by_sub_5_plus",
       "ufc_wins_10_plus",
@@ -15861,6 +16099,8 @@
       "competed_welterweight",
       "competed_lightweight",
       "competed_featherweight",
+      "former_ufc_champion",
+      "two_division_champion",
       "won_by_ko_5_plus",
       "ufc_wins_10_plus",
       "southpaw_stance",
@@ -15913,6 +16153,7 @@
     "Brandon Moreno": [
       "mexican_fighter",
       "competed_flyweight",
+      "former_ufc_champion",
       "ufc_wins_10_plus",
       "orthodox_stance",
       "wrestler_style"
@@ -15973,12 +16214,14 @@
     "Alexa Grasso": [
       "mexican_fighter",
       "competed_strawweight",
+      "former_ufc_champion",
       "orthodox_stance",
       "wrestler_style"
     ],
     "Yair Rodriguez": [
       "mexican_fighter",
       "competed_featherweight",
+      "former_ufc_champion",
       "ufc_wins_10_plus",
       "orthodox_stance",
       "wrestler_style"
@@ -16129,6 +16372,7 @@
       "nigerian_fighter",
       "competed_light_heavyweight",
       "competed_middleweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "decision_specialist",
       "ufc_wins_10_plus",
@@ -16158,6 +16402,7 @@
     "Zhang Weili": [
       "chinese_fighter",
       "competed_strawweight",
+      "former_ufc_champion",
       "ufc_wins_10_plus",
       "wrestler_style"
     ],
@@ -16271,6 +16516,7 @@
     "Rinya Nakamura": [
       "japanese_fighter",
       "competed_bantamweight",
+      "former_ufc_champion",
       "southpaw_stance",
       "wrestler_style"
     ],
@@ -16489,6 +16735,7 @@
       "australian_fighter",
       "competed_lightweight",
       "competed_featherweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "decision_specialist",
       "ufc_wins_10_plus",
@@ -16525,6 +16772,7 @@
     "Jack Della Maddalena": [
       "australian_fighter",
       "competed_welterweight",
+      "former_ufc_champion",
       "wrestler_style"
     ],
     "Jimmy Crute": [
@@ -16566,6 +16814,7 @@
       "australian_fighter",
       "competed_middleweight",
       "competed_welterweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "decision_specialist",
       "ufc_wins_10_plus",
@@ -17006,6 +17255,8 @@
       "canadian_fighter",
       "competed_middleweight",
       "competed_welterweight",
+      "former_ufc_champion",
+      "two_division_champion",
       "won_by_ko_5_plus",
       "decision_specialist",
       "ufc_wins_10_plus",
@@ -17266,6 +17517,7 @@
       "canadian_fighter",
       "competed_middleweight",
       "competed_welterweight",
+      "former_ufc_champion",
       "orthodox_stance",
       "wrestler_style"
     ],
@@ -17314,12 +17566,14 @@
     ],
     "Tom Aspinall": [
       "competed_heavyweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "orthodox_stance",
       "striker_style"
     ],
     "Ciryl Gane": [
       "competed_heavyweight",
+      "former_ufc_champion",
       "ufc_wins_10_plus",
       "orthodox_stance",
       "wrestler_style"
@@ -17396,6 +17650,7 @@
     ],
     "Andrei Arlovski": [
       "competed_heavyweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "decision_specialist",
       "ufc_wins_10_plus",
@@ -17443,6 +17698,7 @@
     ],
     "Francis Ngannou": [
       "competed_heavyweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "ufc_wins_10_plus",
       "orthodox_stance",
@@ -17600,6 +17856,7 @@
     ],
     "Jan Blachowicz": [
       "competed_light_heavyweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "ufc_wins_10_plus",
       "orthodox_stance",
@@ -17641,6 +17898,7 @@
     ],
     "Jiri Prochazka": [
       "competed_light_heavyweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "orthodox_stance",
       "striker_style"
@@ -17743,6 +18001,7 @@
     "Michael Bisping": [
       "competed_light_heavyweight",
       "competed_middleweight",
+      "former_ufc_champion",
       "won_by_ko_5_plus",
       "decision_specialist",
       "ufc_wins_10_plus",
@@ -17893,11 +18152,13 @@
     ],
     "Dricus Du Plessis": [
       "competed_middleweight",
+      "former_ufc_champion",
       "wrestler_style"
     ],
     "Khamzat Chimaev": [
       "competed_middleweight",
       "competed_welterweight",
+      "former_ufc_champion",
       "undefeated_in_ufc",
       "never_been_finished",
       "orthodox_stance",
@@ -18155,6 +18416,7 @@
     ],
     "Leon Edwards": [
       "competed_welterweight",
+      "former_ufc_champion",
       "decision_specialist",
       "ufc_wins_10_plus",
       "southpaw_stance",
@@ -18596,6 +18858,8 @@
     "Ilia Topuria": [
       "competed_lightweight",
       "competed_featherweight",
+      "former_ufc_champion",
+      "two_division_champion",
       "undefeated_in_ufc",
       "won_by_ko_5_plus",
       "never_been_finished",
@@ -18632,6 +18896,7 @@
     ],
     "Anshul Jubli": [
       "competed_lightweight",
+      "former_ufc_champion",
       "striker_style"
     ],
     "Damir Hadzovic": [
@@ -19178,6 +19443,7 @@
     ],
     "SuYoung You": [
       "competed_bantamweight",
+      "former_ufc_champion",
       "undefeated_in_ufc",
       "never_been_finished",
       "orthodox_stance",
@@ -19342,6 +19608,7 @@
     ],
     "HyunSung Park": [
       "competed_flyweight",
+      "former_ufc_champion",
       "orthodox_stance",
       "wrestler_style"
     ],
@@ -19502,6 +19769,7 @@
     ],
     "Joanna Jedrzejczyk": [
       "competed_strawweight",
+      "former_ufc_champion",
       "decision_specialist",
       "ufc_wins_10_plus",
       "orthodox_stance",
@@ -19517,18 +19785,24 @@
       "southpaw_stance",
       "wrestler_style"
     ],
-    "Jacqueline Cavalcanti": [
-      "undefeated_in_ufc",
-      "never_been_finished",
-      "orthodox_stance",
-      "wrestler_style"
-    ],
     "Valentina Shevchenko": [
+      "former_ufc_champion",
       "decision_specialist",
       "ufc_wins_10_plus",
       "southpaw_stance",
       "wrestler_style",
       "gym_tiger_muay_thai"
+    ],
+    "Germaine de Randamie": [
+      "former_ufc_champion",
+      "orthodox_stance",
+      "wrestler_style"
+    ],
+    "Jacqueline Cavalcanti": [
+      "undefeated_in_ufc",
+      "never_been_finished",
+      "orthodox_stance",
+      "wrestler_style"
     ],
     "Veronica Hardy": [
       "southpaw_stance",
@@ -19620,10 +19894,6 @@
       "wrestler_style"
     ],
     "Lucie Pudilova": [
-      "orthodox_stance",
-      "wrestler_style"
-    ],
-    "Germaine de Randamie": [
       "orthodox_stance",
       "wrestler_style"
     ],
