@@ -2,9 +2,10 @@
 Scrape fighter headshot image URLs from UFC.com (and Tapology as fallback)
 and add image_url to each fighter in data/processed/fighters_final.json.
 
-Run from project root: python data/scrape_headshots.py
+Run from project root: python data/scrape_headshots.py [--limit N]
 Requires: requests, beautifulsoup4
 """
+import argparse
 import json
 import re
 import sys
@@ -147,6 +148,16 @@ def fetch_headshot(fighter: dict, session: requests.Session, log_errors: list) -
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Scrape fighter headshot URLs into fighters_final.json")
+    parser.add_argument(
+        "--limit", "-n",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Process only the first N fighters (for testing)",
+    )
+    args = parser.parse_args()
+
     if not FIGHTERS_PATH.exists():
         print(f"Not found: {FIGHTERS_PATH}", file=sys.stderr)
         sys.exit(1)
@@ -156,12 +167,20 @@ def main():
     if not isinstance(fighters, list):
         fighters = [fighters]
 
+    to_process = fighters
+    if args.limit is not None:
+        if args.limit < 1:
+            print("--limit must be >= 1", file=sys.stderr)
+            sys.exit(1)
+        to_process = fighters[: args.limit]
+        print(f"Limiting to first {len(to_process)} fighters")
+
     session = requests.Session()
     session.headers["User-Agent"] = USER_AGENT
 
     errors = []
-    total = len(fighters)
-    for i, fighter in enumerate(fighters):
+    total = len(to_process)
+    for i, fighter in enumerate(to_process):
         if (i + 1) % 25 == 0:
             print(f"Progress: {i + 1}/{total}")
 
