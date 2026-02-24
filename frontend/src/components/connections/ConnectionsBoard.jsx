@@ -74,11 +74,11 @@ export default function ConnectionsBoard({
                     ${isSelected ? 'ring-2 ring-white scale-95' : ''}
                   `}
                 >
-                  <p className="font-medium text-ufc-text text-sm truncate">
+                  <p className="font-medium text-ufc-text text-sm break-words leading-tight">
                     {fighter.name}
                   </p>
                   {fighter.nickname ? (
-                    <p className="text-xs text-ufc-muted truncate mt-0.5">
+                    <p className="text-xs text-ufc-muted break-words leading-tight mt-0.5">
                       {fighter.nickname}
                     </p>
                   ) : null}

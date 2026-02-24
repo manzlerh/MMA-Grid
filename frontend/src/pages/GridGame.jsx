@@ -6,6 +6,7 @@ import { generateGridShareText } from '../utils/shareText'
 import { getStoredResult, setStoredResult } from '../utils/storedResult'
 import { Navbar, ResultModal, StatsModal } from '../components/shared'
 import { GridBoard, CellModal, GridSkeleton } from '../components/grid'
+import { MistakeTracker } from '../components/connections'
 
 const ALL_GRID_CELLS = new Set(['0,0', '0,1', '0,2', '1,0', '1,1', '1,2', '2,0', '2,1', '2,2'])
 
@@ -125,7 +126,7 @@ export default function GridGame({ previewDate }) {
         ? Math.floor((Date.now() - gameStartTime.current) / 1000)
         : undefined
     setFinalTimeSeconds(timeSeconds ?? null)
-    const attempts = 9 - attemptsLeft
+    const attempts = 3 - attemptsLeft
     const shareTextForStorage = generateGridShareText({
       won: gameWon,
       score,
@@ -169,7 +170,7 @@ export default function GridGame({ previewDate }) {
       ? generateGridShareText({
           won: gameWon,
           score,
-          attempts: 9 - attemptsLeft,
+          attempts: 3 - attemptsLeft,
           board,
           puzzleDate: effectiveDate,
         })
@@ -183,10 +184,8 @@ export default function GridGame({ previewDate }) {
           <header className="text-center mb-6">
             <div className="h-4 w-32 mx-auto bg-ufc-card rounded animate-pulse" />
             <div className="h-8 w-48 mx-auto bg-ufc-gold/20 rounded mt-3 animate-pulse" />
-            <div className="flex justify-center gap-1 mt-3">
-              {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                <span key={i} className="w-4 h-4 bg-ufc-border rounded-full" />
-              ))}
+            <div className="mt-3 flex justify-center">
+              <MistakeTracker mistakesLeft={3} maxMistakes={3} />
             </div>
           </header>
           <GridSkeleton />
@@ -229,7 +228,7 @@ export default function GridGame({ previewDate }) {
             )}
             {resultForModal && (
               <p className="text-ufc-muted text-sm text-center">
-                Score: {resultForModal.score} | Attempts: {resultForModal.attempts}/9
+                Score: {resultForModal.score} | Attempts: {resultForModal.attempts}/3
               </p>
             )}
             <p className="text-ufc-muted text-xs text-center">
@@ -242,24 +241,8 @@ export default function GridGame({ previewDate }) {
           <p className="text-ufc-muted text-sm">{previewDate ? effectiveDate : todayFormatted()}</p>
           <h1 className="font-display text-3xl text-ufc-gold tracking-wide mt-1">DAILY GRID</h1>
           {!alreadyPlayed && (
-            <div className="flex items-center justify-center gap-1 mt-3" aria-label={`${attemptsLeft} attempts left`}>
-              {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                <span
-                  key={i}
-                  className="w-4 h-4 flex items-center justify-center text-xs"
-                  title={i < attemptsLeft ? 'Attempt remaining' : 'Used'}
-                >
-                  {i < attemptsLeft ? (
-                    <svg viewBox="0 0 24 24" className="w-4 h-4 text-ufc-gold fill-current" aria-hidden>
-                      <polygon points="12 2 22 8 22 16 12 22 2 16 2 8" stroke="currentColor" strokeWidth="1.5" fill="currentColor" />
-                    </svg>
-                  ) : (
-                    <svg viewBox="0 0 24 24" className="w-4 h-4 text-ufc-muted" aria-hidden>
-                      <polygon points="12 2 22 8 22 16 12 22 2 16 2 8" stroke="currentColor" strokeWidth="1.5" fill="none" />
-                    </svg>
-                  )}
-                </span>
-              ))}
+            <div className="mt-3">
+              <MistakeTracker mistakesLeft={attemptsLeft} maxMistakes={3} />
             </div>
           )}
         </header>
@@ -289,7 +272,7 @@ export default function GridGame({ previewDate }) {
           gameType="grid"
           won={resultForModal?.won ?? gameWon}
           score={resultForModal?.score ?? score}
-          attempts={resultForModal?.attempts ?? 9 - attemptsLeft}
+          attempts={resultForModal?.attempts ?? 3 - attemptsLeft}
           timeSeconds={resultForModal ? undefined : (finalTimeSeconds ?? undefined)}
           dailyStats={dailyStats}
           shareText={resultForModal?.shareText ?? shareText}

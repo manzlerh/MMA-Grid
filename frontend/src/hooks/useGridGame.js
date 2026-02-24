@@ -16,7 +16,7 @@ export function useGridGame(puzzle, options = {}) {
   const [board, setBoard] = useState(emptyBoard)
   const [selectedCell, setSelectedCell] = useState(null)
   const [lockedCells, setLockedCells] = useState(() => new Set())
-  const [attemptsLeft, setAttemptsLeft] = useState(9)
+  const [attemptsLeft, setAttemptsLeft] = useState(3)
   const [score, setScore] = useState(0)
   const [gameOver, setGameOver] = useState(false)
   const [gameWon, setGameWon] = useState(false)
@@ -64,7 +64,7 @@ export function useGridGame(puzzle, options = {}) {
             if (next.size === 9) setGameWon(true)
             return next
           })
-          setScore((s) => s + (100 - (9 - attemptsLeft) * 5))
+          setScore((s) => s + (100 - (3 - attemptsLeft) * 15))
           setSelectedCell(null)
         } else {
           setLastFailedCell({ row, col })

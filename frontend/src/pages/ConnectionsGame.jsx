@@ -142,7 +142,7 @@ export default function ConnectionsGame({ previewDate }) {
     completionHandled.current = true
     markGameCompleted('connections')
     const puzzleDate = todayYYYYMMDD()
-    const mistakesUsed = 5 - mistakesLeft
+    const mistakesUsed = 3 - mistakesLeft
     const timeSeconds =
       gameStartTime.current != null
         ? Math.floor((Date.now() - gameStartTime.current) / 1000)
@@ -178,7 +178,7 @@ export default function ConnectionsGame({ previewDate }) {
 
   const canSubmit = selectedIds.size === 4
   const showResultModal = gameWon || gameOver
-  const mistakesUsed = 5 - mistakesLeft
+  const mistakesUsed = 3 - mistakesLeft
   const connectionsScore = gameWon ? Math.max(0, 1000 - 150 * mistakesUsed) : 0
   useEffect(() => {
     if (showResultModal) setResultModalOpen(true)
@@ -265,7 +265,7 @@ export default function ConnectionsGame({ previewDate }) {
 
         {!alreadyPlayed && (
           <div className="flex justify-center mb-4">
-            <MistakeTracker mistakesLeft={mistakesLeft} maxMistakes={5} />
+            <MistakeTracker mistakesLeft={mistakesLeft} maxMistakes={3} />
           </div>
         )}
 

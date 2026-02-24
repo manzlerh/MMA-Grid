@@ -47,7 +47,7 @@ export function generateGridShareText({ won, score, attempts, board, puzzleDate 
   }
 
   lines.push('')
-  lines.push(`Score: ${score ?? 0} | Attempts: ${attempts ?? 0}/9`)
+  lines.push(`Score: ${score ?? 0} | Attempts: ${attempts ?? 0}/3`)
   const playUrl = getPlayUrl()
   if (playUrl) lines.push(`Play at: ${playUrl}`)
 

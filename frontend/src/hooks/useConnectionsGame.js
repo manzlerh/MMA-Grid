@@ -41,7 +41,7 @@ export function useConnectionsGame(puzzle) {
   const [fighters, setFighters] = useState(() => buildInitialFighters(puzzle ?? {}))
   const [selectedIds, setSelectedIds] = useState(() => new Set())
   const [solvedGroups, setSolvedGroups] = useState([])
-  const [mistakesLeft, setMistakesLeft] = useState(5)
+  const [mistakesLeft, setMistakesLeft] = useState(3)
   const [gameOver, setGameOver] = useState(false)
   const [gameWon, setGameWon] = useState(false)
   const [lastGuessWrong, setLastGuessWrong] = useState(false)
