@@ -28,6 +28,8 @@ import enrich_fighters
 import build_attribute_index
 import import_to_db
 import scrape_rankings_wikipedia
+import scrape_most_followed_fighters
+import scrape_tapology_fan_favorites
 import generate_fighter_popularity
 
 
@@ -145,7 +147,11 @@ def main() -> None:
     # Update UFC rankings from Wikipedia (fighter_rankings table)
     scrape_rankings_wikipedia.main()
 
-    # Generate fighter popularity scores (uses rankings + champion/bonuses/fights); then rebuild index with popularity
+    # Popularity sources (most-followed + Tapology fan favorites) for weighted puzzle selection
+    scrape_most_followed_fighters.main()
+    scrape_tapology_fan_favorites.main()
+
+    # Generate fighter popularity scores; then rebuild index with popularity
     generate_fighter_popularity.main()
     build_attribute_index.main()
 

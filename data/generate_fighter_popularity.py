@@ -1,20 +1,23 @@
 """
-Generate a composite fighter popularity score from weighted signals (option 1: single score)
-and write processed/fighter_popularity.json for use in puzzle generation (option 2: weighted selection).
+Generate a composite fighter popularity score from weighted signals and write
+processed/fighter_popularity.json for use in puzzle generation.
 
-Signals and weights:
-- UFC rankings (fighter_rankings): C=40, IC=35, 1=30 down to 15=2; P4P division gets 1.2x. Best rank across divisions.
-- is_champion: +25
-- is_former_champion: +12
-- total_fights: log(1 + n) * scale, cap 20 (more UFC fights = more exposure)
-- performance_bonuses: min(10, count * 2)
+Weight order (highest to lowest):
+1. Most-followed list (The Scrap) — highest; those fighters get a large boost.
+2. Tapology fan-voted favorite ranking — full list, position-based decay.
+3. Wikipedia pageviews (optional file wikipedia_pageviews.json) — if present.
+4. UFC ranking + champion/former champion status.
+5. Other (total_fights, performance_bonuses) — relatively low.
 
-Total is capped at 100; stored as 0.0–1.0 in JSON. Run from project root. Requires DATABASE_URL for rankings.
+Run from project root. Requires DATABASE_URL for rankings. For best results, run
+scrape_most_followed_fighters.py and scrape_tapology_fan_favorites.py first.
 """
 import json
 import math
 import os
+import re
 import sys
+import unicodedata
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -24,23 +27,38 @@ ENV_PATH = PROJECT_ROOT / ".env"
 FIGHTERS_FINAL = DATA_DIR / "fighters_final.json"
 FIGHTERS_ENRICHED = DATA_DIR / "fighters_enriched.json"
 OUTPUT_PATH = DATA_DIR / "fighter_popularity.json"
+MOST_FOLLOWED_PATH = DATA_DIR / "most_followed_fighters.json"
+TAPOLOGY_FAVORITES_PATH = DATA_DIR / "tapology_fan_favorites.json"
+WIKIPEDIA_PAGEVIEWS_PATH = DATA_DIR / "wikipedia_pageviews.json"
 
 sys.path.insert(0, str(SCRIPT_DIR))
 
+# ---- Weights (tunable). Order: most_followed > tapology > wikipedia > ranking/champion > other ----
+WEIGHT_MOST_FOLLOWED = 35.0       # If on The Scrap most-followed list
+WEIGHT_TAPOLOGY_MAX = 30.0        # Rank 1 ≈ 30, decay by position
+WEIGHT_WIKIPEDIA_MAX = 20.0       # Log-scale pageviews, cap this
+WEIGHT_RANKING_CAP = 12.0         # Best UFC rank across divisions (reduced)
+WEIGHT_CHAMPION = 10.0
+WEIGHT_FORMER_CHAMPION = 5.0
+WEIGHT_TOTAL_FIGHTS_CAP = 5.0
+WEIGHT_TOTAL_FIGHTS_SCALE = 1.2
+WEIGHT_BONUS_PER = 0.5
+WEIGHT_BONUS_CAP = 3.0
 
-# Weights (tunable)
-WEIGHT_CHAMPION = 25
-WEIGHT_FORMER_CHAMPION = 12
-WEIGHT_TOTAL_FIGHTS_CAP = 20
-WEIGHT_TOTAL_FIGHTS_SCALE = 4.0  # log(1+x)*scale, cap WEIGHT_TOTAL_FIGHTS_CAP
-WEIGHT_BONUS_PER = 2
-WEIGHT_BONUS_CAP = 10
-# Ranking: best rank across divisions. P4P gets 1.2x multiplier.
-RANK_POINTS = {"C": 40, "IC": 35}
+RANK_POINTS = {"C": 12, "IC": 10}
 for i in range(1, 16):
-    RANK_POINTS[str(i)] = max(2, 32 - 2 * i)
+    RANK_POINTS[str(i)] = max(0.5, 10 - 0.6 * i)
 P4P_DIVISIONS = frozenset(("Men's pound-for-pound", "Women's pound-for-pound"))
-RANK_CAP = 45  # after P4P multiplier
+
+
+def _normalize_name(name: str) -> str:
+    """Lowercase, collapse spaces, ASCII-fold accents for matching across sources."""
+    if not name:
+        return ""
+    n = unicodedata.normalize("NFKD", name)
+    n = "".join(c for c in n if not unicodedata.combining(c))
+    n = n.encode("ascii", "ignore").decode("ascii").lower()
+    return " ".join(re.sub(r"[^a-z0-9\s]", "", n).split())
 
 
 def _load_fighters() -> list[dict]:
@@ -51,6 +69,47 @@ def _load_fighters() -> list[dict]:
     with open(path, encoding="utf-8") as f:
         data = json.load(f)
     return data if isinstance(data, list) else [data]
+
+
+def _load_most_followed() -> set[str]:
+    """Set of normalized names from most_followed_fighters.json."""
+    if not MOST_FOLLOWED_PATH.exists():
+        return set()
+    try:
+        with open(MOST_FOLLOWED_PATH, encoding="utf-8") as f:
+            data = json.load(f)
+        names = data.get("names") or [e.get("name") for e in data.get("entries") or []]
+        return {_normalize_name(n) for n in names if n}
+    except Exception as e:
+        print(f"Could not load most_followed: {e}", file=sys.stderr)
+        return set()
+
+
+def _load_tapology_name_to_rank() -> dict[str, int]:
+    """Normalized name -> best rank (1 = first). From tapology_fan_favorites.json."""
+    if not TAPOLOGY_FAVORITES_PATH.exists():
+        return {}
+    try:
+        with open(TAPOLOGY_FAVORITES_PATH, encoding="utf-8") as f:
+            data = json.load(f)
+        name_to_rank = data.get("name_to_rank") or {}
+        return {_normalize_name(k): v for k, v in name_to_rank.items() if k}
+    except Exception as e:
+        print(f"Could not load Tapology favorites: {e}", file=sys.stderr)
+        return {}
+
+
+def _load_wikipedia_pageviews() -> dict[str, float]:
+    """Fighter name (any case) -> pageview count. Optional file."""
+    if not WIKIPEDIA_PAGEVIEWS_PATH.exists():
+        return {}
+    try:
+        with open(WIKIPEDIA_PAGEVIEWS_PATH, encoding="utf-8") as f:
+            data = json.load(f)
+        return {k: float(v) for k, v in (data if isinstance(data, dict) else {}).items()}
+    except Exception as e:
+        print(f"Could not load Wikipedia pageviews: {e}", file=sys.stderr)
+        return {}
 
 
 def _load_rankings_from_db() -> dict[str, list[tuple[str, str]]]:
@@ -86,7 +145,7 @@ def _load_rankings_from_db() -> dict[str, list[tuple[str, str]]]:
 
 
 def _ranking_score(rankings: list[tuple[str, str]]) -> float:
-    """Best rank across divisions; P4P ranks get 1.5x. Capped at RANK_CAP."""
+    """Best rank across divisions; P4P gets 1.2x. Capped at WEIGHT_RANKING_CAP."""
     if not rankings:
         return 0.0
     best = 0.0
@@ -96,9 +155,27 @@ def _ranking_score(rankings: list[tuple[str, str]]) -> float:
             continue
         points = RANK_POINTS.get(pos, 0)
         if division in P4P_DIVISIONS:
-            points *= 1.5
-        best = max(best, min(RANK_CAP, points))
+            points *= 1.2
+        best = max(best, min(WEIGHT_RANKING_CAP, points))
     return best
+
+
+def _tapology_score(rank: int) -> float:
+    """Score from Tapology fan rank: 1 => max, decay by position."""
+    if rank < 1:
+        return 0.0
+    return WEIGHT_TAPOLOGY_MAX / (1.0 + math.log2(max(1, rank)))
+
+
+def _wikipedia_score(views: float, max_views: float) -> float:
+    """Log-scale pageviews, normalized to WEIGHT_WIKIPEDIA_MAX."""
+    if max_views <= 0 or views <= 0:
+        return 0.0
+    log_val = math.log1p(views)
+    log_max = math.log1p(max_views)
+    if log_max <= 0:
+        return 0.0
+    return WEIGHT_WIKIPEDIA_MAX * (log_val / log_max)
 
 
 def _total_fights_component(total_fights: int | None) -> float:
@@ -123,14 +200,26 @@ def _bonus_component(performance_bonuses: int | None) -> float:
 def compute_scores(
     fighters: list[dict],
     name_to_rankings: dict[str, list[tuple[str, str]]],
+    most_followed_norm: set[str],
+    tapology_norm_to_rank: dict[str, int],
+    wikipedia_views: dict[str, float],
 ) -> dict[str, float]:
     """Return fighter name -> raw score (0–100)."""
+    max_wiki = max(wikipedia_views.values()) if wikipedia_views else 0.0
     scores: dict[str, float] = {}
     for f in fighters:
         name = (f.get("name") or "").strip()
         if not name:
             continue
+        norm = _normalize_name(name)
         total = 0.0
+        if norm in most_followed_norm:
+            total += WEIGHT_MOST_FOLLOWED
+        tap_rank = tapology_norm_to_rank.get(norm)
+        if tap_rank is not None:
+            total += _tapology_score(tap_rank)
+        if name in wikipedia_views:
+            total += _wikipedia_score(wikipedia_views[name], max_wiki)
         total += _ranking_score(name_to_rankings.get(name, []))
         total += WEIGHT_CHAMPION if f.get("is_champion") else 0
         total += WEIGHT_FORMER_CHAMPION if f.get("is_former_champion") else 0
@@ -142,17 +231,35 @@ def compute_scores(
 
 def main() -> None:
     fighters = _load_fighters()
+    most_followed_norm = _load_most_followed()
+    tapology_norm_to_rank = _load_tapology_name_to_rank()
+    wikipedia_views = _load_wikipedia_pageviews()
     name_to_rankings = _load_rankings_from_db()
-    raw_scores = compute_scores(fighters, name_to_rankings)
-    # Normalize to 0.0–1.0 for storage
+
+    raw_scores = compute_scores(
+        fighters,
+        name_to_rankings,
+        most_followed_norm,
+        tapology_norm_to_rank,
+        wikipedia_views,
+    )
     scores = {name: round(score / 100.0, 4) for name, score in raw_scores.items()}
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     payload = {
         "scores": scores,
         "meta": {
-            "version": 1,
+            "version": 2,
+            "sources": {
+                "most_followed": len(most_followed_norm),
+                "tapology_favorites": len(tapology_norm_to_rank),
+                "wikipedia_pageviews": len(wikipedia_views),
+                "rankings_from_db": len(name_to_rankings),
+            },
             "weights": {
-                "ranking_cap": RANK_CAP,
+                "most_followed": WEIGHT_MOST_FOLLOWED,
+                "tapology_max": WEIGHT_TAPOLOGY_MAX,
+                "wikipedia_max": WEIGHT_WIKIPEDIA_MAX,
+                "ranking_cap": WEIGHT_RANKING_CAP,
                 "champion": WEIGHT_CHAMPION,
                 "former_champion": WEIGHT_FORMER_CHAMPION,
                 "total_fights_cap": WEIGHT_TOTAL_FIGHTS_CAP,
@@ -163,10 +270,14 @@ def main() -> None:
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2)
     print(f"Wrote {OUTPUT_PATH}: {len(scores)} fighter popularity scores (0–1).")
+    if most_followed_norm:
+        print(f"  Most-followed list: {len(most_followed_norm)} names.")
+    if tapology_norm_to_rank:
+        print(f"  Tapology fan favorites: {len(tapology_norm_to_rank)} names.")
+    if wikipedia_views:
+        print(f"  Wikipedia pageviews: {len(wikipedia_views)} names.")
     if name_to_rankings:
-        print(f"  Rankings loaded for {len(name_to_rankings)} fighters from DB.")
-    else:
-        print("  Rankings skipped (DB unavailable).")
+        print(f"  UFC rankings (DB): {len(name_to_rankings)} fighters.")
 
 
 if __name__ == "__main__":
