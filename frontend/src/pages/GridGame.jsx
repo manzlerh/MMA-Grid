@@ -250,9 +250,10 @@ export default function GridGame({ previewDate }) {
         <GridBoard
           puzzle={puzzle ?? {}}
           board={displayBoard}
-          onCellClick={alreadyPlayed ? () => {} : selectCell}
+          onCellClick={alreadyPlayed || gameOver ? () => {} : selectCell}
           lockedCells={alreadyPlayed ? ALL_GRID_CELLS : lockedCells}
           shakingCell={alreadyPlayed ? null : lastFailedCell}
+          gameOver={gameOver}
         />
 
         {!alreadyPlayed && (
