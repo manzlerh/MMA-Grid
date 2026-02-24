@@ -1,11 +1,11 @@
 /**
- * Base URL for "Play at:" link. Uses current origin in browser.
+ * Base URL for "Play at:" link. Uses current origin in browser; empty when not in browser (e.g. SSR).
  */
 function getPlayUrl() {
   if (typeof window !== 'undefined' && window.location?.origin) {
     return window.location.origin
   }
-  return 'https://mma-grid.example.com'
+  return ''
 }
 
 /**
@@ -48,7 +48,8 @@ export function generateGridShareText({ won, score, attempts, board, puzzleDate 
 
   lines.push('')
   lines.push(`Score: ${score ?? 0} | Attempts: ${attempts ?? 0}/9`)
-  lines.push(`Play at: ${getPlayUrl()}`)
+  const playUrl = getPlayUrl()
+  if (playUrl) lines.push(`Play at: ${playUrl}`)
 
   return lines.join('\n')
 }
@@ -90,7 +91,8 @@ export function generateConnectionsShareText({ won, mistakes, solvedGroups, puzz
 
   lines.push('')
   lines.push(`Solved in order! Mistakes: ${mistakes ?? 0}`)
-  lines.push(`Play at: ${getPlayUrl()}`)
+  const playUrl = getPlayUrl()
+  if (playUrl) lines.push(`Play at: ${playUrl}`)
 
   return lines.join('\n')
 }

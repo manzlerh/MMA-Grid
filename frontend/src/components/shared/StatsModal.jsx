@@ -217,7 +217,7 @@ export default function StatsModal({ isOpen, onClose }) {
               <p className="text-ufc-muted text-sm">Play more games to see your history</p>
             </div>
           ) : (
-            <div className="rounded-lg border border-ufc-border bg-ufc-card p-2" style={{ height: 120 }}>
+            <div className="h-[120px] rounded-lg border border-ufc-border bg-ufc-card p-2">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
                   <XAxis
