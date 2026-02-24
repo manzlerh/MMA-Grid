@@ -241,7 +241,7 @@ def main() -> None:
                     try:
                         puzzle = generate_connections_puzzle(
                             difficulty=attempt_diff,
-                            max_attempts=300,
+                            max_attempts=600,
                             exclude_attribute_ids=exclude_conn if attempt_diff == diff else None,
                             index=conn_index,
                         )

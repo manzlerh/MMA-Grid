@@ -79,6 +79,49 @@ def _filter_attributes(
     return out
 
 
+def _pairwise_overlap(available: list[dict]) -> dict[tuple[str, str], int]:
+    """For each pair of attributes in available, count fighters that match both. Keys are (aid1, aid2) with aid1 < aid2."""
+    overlap: dict[tuple[str, str], int] = {}
+    for i, a in enumerate(available):
+        set_a = set(a["fighters"])
+        for j in range(i + 1, len(available)):
+            b = available[j]
+            set_b = set(b["fighters"])
+            key = (a["id"], b["id"]) if a["id"] < b["id"] else (b["id"], a["id"])
+            overlap[key] = len(set_a & set_b)
+    return overlap
+
+
+def _choose_low_overlap_quadruple(
+    available: list[dict],
+    overlap_map: dict[tuple[str, str], int],
+) -> list[dict]:
+    """
+    Choose 4 attributes with low pairwise overlap. Greedy: pick first at random,
+    then repeatedly add the attribute that minimizes sum of overlaps with already chosen.
+    """
+    if len(available) < 4:
+        return random.sample(available, len(available))
+    chosen: list[dict] = [random.choice(available)]
+    remaining = [a for a in available if a["id"] != chosen[0]["id"]]
+    while len(chosen) < 4 and remaining:
+        best_attr = None
+        best_sum = float("inf")
+        for a in remaining:
+            s = 0
+            for c in chosen:
+                key = (a["id"], c["id"]) if a["id"] < c["id"] else (c["id"], a["id"])
+                s += overlap_map.get(key, 0)
+            if s < best_sum:
+                best_sum = s
+                best_attr = a
+        if best_attr is None:
+            break
+        chosen.append(best_attr)
+        remaining = [a for a in remaining if a["id"] != best_attr["id"]]
+    return chosen
+
+
 def _sample_four(
     fighter_list: list[str],
     already_used: set[str],
@@ -91,6 +134,41 @@ def _sample_four(
         pool = [f for f in pool if obscure_set.get(f, False)]
     if len(pool) < 4:
         return None
+    return random.sample(pool, 4)
+
+
+def _chosen_attr_count(fighter_name: str, chosen_attr_ids: list[str], by_fighter: dict) -> int:
+    """Number of chosen attribute ids this fighter has (1 = unique to one category among the 4)."""
+    fighter_attrs = set(by_fighter.get(fighter_name) or [])
+    return len(fighter_attrs & set(chosen_attr_ids))
+
+
+def _sample_four_prefer_unique(
+    fighter_list: list[str],
+    already_used: set[str],
+    chosen_attr_ids: list[str],
+    by_fighter: dict,
+    obscure_only: bool,
+    obscure_set: dict[str, bool],
+) -> list[str] | None:
+    """
+    Sample 4 fighters from fighter_list, preferring those who match only one of the chosen attributes
+    (most unique to this category). Tiers: count 1 first, then 2, then 3+.
+    """
+    pool = [f for f in fighter_list if f not in already_used]
+    if obscure_only:
+        pool = [f for f in pool if obscure_set.get(f, False)]
+    if len(pool) < 4:
+        return None
+    tier1 = [f for f in pool if _chosen_attr_count(f, chosen_attr_ids, by_fighter) == 1]
+    tier2 = [f for f in pool if _chosen_attr_count(f, chosen_attr_ids, by_fighter) == 2]
+    tier3 = [f for f in pool if _chosen_attr_count(f, chosen_attr_ids, by_fighter) >= 3]
+    if len(tier1) >= 4:
+        return random.sample(tier1, 4)
+    if len(tier1) + len(tier2) >= 4:
+        need = 4 - len(tier1)
+        return list(tier1) + random.sample(tier2, need)
+    # Not enough in tier1+tier2; take 4 from full pool (prioritizing lower count would need weighted sample)
     return random.sample(pool, 4)
 
 
@@ -138,8 +216,8 @@ def _resolve_overlaps(
     return groups
 
 
-def _decoy_ok(groups: list[dict], index: dict) -> bool:
-    """Each group's attribute must be matched by at least 6 of the 16 fighters (4 in group + 2 decoys)."""
+def _decoy_ok(groups: list[dict], index: dict, min_match: int = 4) -> bool:
+    """Each group's attribute must be matched by at least min_match of the 16 fighters (4 in group + optional decoys)."""
     by_attr = index.get("by_attribute") or {}
     all_16 = set()
     for g in groups:
@@ -150,19 +228,42 @@ def _decoy_ok(groups: list[dict], index: dict) -> bool:
         attr_id = g["id"]
         matching = set(by_attr.get(attr_id) or [])
         count_in_16 = len(all_16 & matching)
-        if count_in_16 < 6:
+        if count_in_16 < min_match:
+            return False
+    return True
+
+
+# Ambiguity limits: at most this many fighters may fit 2+ categories.
+# At most one fighter may fit 3 categories; none may fit all 4.
+MAX_AMBIGUOUS_FIGHTERS = 3
+MAX_FIGHTERS_FITTING_3_CATEGORIES = 1
+
+
+def _ambiguity_ok(puzzle: dict, index: dict) -> bool:
+    """Reject if too many fighters fit multiple categories or more than one fits 3+ categories."""
+    report = check_ambiguity(puzzle, index)
+    if report["summary"]["ambiguous_count"] > MAX_AMBIGUOUS_FIGHTERS:
+        return False
+    count_three_plus = sum(1 for info in report["per_fighter"].values() if info["match_count"] >= 3)
+    if count_three_plus > MAX_FIGHTERS_FITTING_3_CATEGORIES:
+        return False
+    # No fighter may fit all 4 categories
+    for info in report["per_fighter"].values():
+        if info["match_count"] >= 4:
             return False
     return True
 
 
 def generate_connections_puzzle(
     difficulty: str = "normal",
-    max_attempts: int = 300,
+    max_attempts: int = 600,
     exclude_attribute_ids: list[str] | set[str] | None = None,
     index: dict | None = None,
 ) -> dict:
     """
     Generate a Connections puzzle: 4 groups of 4 fighters each.
+    Uses low-overlap attribute selection, prefers fighters unique to one category, and
+    rejects puzzles with too much ambiguity (goal: at most 2-3 fighters in 2 categories, none in 3+).
     Returns { groups: [{ id, label, color, fighters }], all_fighters: [16 names shuffled], difficulty }.
     """
     idx = index or _load_index()
@@ -173,15 +274,23 @@ def generate_connections_puzzle(
     fighters_list = _load_fighters()
     obscure = _obscure_by_name(fighters_list)
     by_attr = idx.get("by_attribute") or {}
+    by_fighter = idx.get("by_fighter") or {}
     use_obscure = difficulty == "hard"
 
+    overlap_map = _pairwise_overlap(available)
+
     for _ in range(max_attempts):
-        chosen = random.sample(available, 4)
+        chosen = _choose_low_overlap_quadruple(available, overlap_map)
+        chosen_attr_ids = [c["id"] for c in chosen]
         used = set()
         groups = []
         for attr_info in chosen:
             fighter_list = list(attr_info["fighters"])
-            four = _sample_four(fighter_list, used, use_obscure, obscure)
+            four = _sample_four_prefer_unique(
+                fighter_list, used, chosen_attr_ids, by_fighter, use_obscure, obscure
+            )
+            if four is None:
+                four = _sample_four(fighter_list, used, use_obscure, obscure)
             if four is None:
                 four = _sample_four(fighter_list, used, False, obscure)
             if four is None:
@@ -213,11 +322,15 @@ def generate_connections_puzzle(
             all_16.extend(g["fighters"])
         random.shuffle(all_16)
 
-        return {
+        puzzle = {
             "groups": groups,
             "all_fighters": all_16,
             "difficulty": difficulty,
         }
+        if not _ambiguity_ok(puzzle, idx):
+            continue
+
+        return puzzle
 
     raise ValueError(f"Could not generate a {difficulty} connections puzzle within {max_attempts} attempts.")
 
