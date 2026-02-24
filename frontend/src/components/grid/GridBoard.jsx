@@ -21,7 +21,12 @@ function initials(name) {
 
 function FilledCell({ fighter, locked, canInteract, onClick, isShaking }) {
   const [imageFailed, setImageFailed] = useState(false)
-  const showHeadshot = fighter?.image_url && !imageFailed
+  const rawUrl = fighter?.image_url
+  const sanitizedUrl =
+    typeof rawUrl === 'string'
+      ? rawUrl.replace(/^['"]+|['"]+$/g, '').trim()
+      : ''
+  const showHeadshot = !!sanitizedUrl && !imageFailed
   const CellWrapper = isShaking ? motion.div : Fragment
   const wrapperProps = isShaking
     ? { animate: 'shake', variants: shakeVariants, className: 'aspect-square' }
@@ -38,18 +43,37 @@ function FilledCell({ fighter, locked, canInteract, onClick, isShaking }) {
           : 'border border-ufc-red'}
       `}
       style={showHeadshot ? {
-        backgroundImage: `url(${fighter.image_url})`,
+        backgroundImage: `url(${sanitizedUrl})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       } : undefined}
     >
+      {/* todo: remove this debug log */}
+      {typeof window !== 'undefined' && console.log(
+        '[Grid FilledCell] render',
+        {
+          name: fighter?.name,
+          image_url: fighter?.image_url,
+          sanitized: sanitizedUrl,
+          showHeadshot,
+          imageFailed,
+        }
+      )}
       {showHeadshot ? (
         <>
           <img
-            src={fighter.image_url}
+            src={sanitizedUrl}
             alt=""
             className="absolute inset-0 w-full h-full object-cover opacity-0 pointer-events-none"
-            onError={() => setImageFailed(true)}
+            onError={(e) => {
+              // todo: remove this debug log
+              console.warn('[Grid FilledCell] image load error', {
+                name: fighter?.name,
+                image_url: fighter?.image_url,
+                error: e?.nativeEvent?.message ?? 'unknown',
+              })
+              setImageFailed(true)
+            }}
           />
           <span
             className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"

@@ -40,6 +40,16 @@ export async function validateGridAnswer(cell, fighterName, opts = {}) {
   const body = { cell, fighterName }
   if (opts.puzzleDate) body.puzzleDate = opts.puzzleDate
   const { data } = await api.post('/validate', body)
+  // todo: remove this debug log
+  if (import.meta.env.DEV) {
+    console.log('[validateGridAnswer] response', {
+      cell,
+      fighterName,
+      puzzleDate: opts.puzzleDate,
+      fighter: data?.fighter,
+      image_url: data?.fighter?.image_url,
+    })
+  }
   return data
 }
 
