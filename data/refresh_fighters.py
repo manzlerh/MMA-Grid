@@ -28,6 +28,7 @@ import enrich_fighters
 import build_attribute_index
 import import_to_db
 import scrape_rankings_wikipedia
+import generate_fighter_popularity
 
 
 FIGHTERS_ENRICHED = PROCESSED_DIR / "fighters_enriched.json"
@@ -141,11 +142,12 @@ def main() -> None:
     summary = f"Added: {added} fighters, Updated: {updated_count} fighters, Unchanged: {unchanged_count} fighters"
     print(summary)
 
-    # Rebuild attribute index
-    build_attribute_index.main()
-
     # Update UFC rankings from Wikipedia (fighter_rankings table)
     scrape_rankings_wikipedia.main()
+
+    # Generate fighter popularity scores (uses rankings + champion/bonuses/fights); then rebuild index with popularity
+    generate_fighter_popularity.main()
+    build_attribute_index.main()
 
     send_discord_summary(added, updated_count, unchanged_count)
 

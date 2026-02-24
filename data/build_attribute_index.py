@@ -13,6 +13,7 @@ DATA_DIR = SCRIPT_DIR / "processed"
 FIGHTERS_FINAL = DATA_DIR / "fighters_final.json"
 FIGHTERS_ENRICHED = DATA_DIR / "fighters_enriched.json"
 FIGHT_HISTORY_PATH = DATA_DIR / "fight_history.json"
+POPULARITY_PATH = DATA_DIR / "fighter_popularity.json"
 OUTPUT_PATH = DATA_DIR / "attribute_index.json"
 
 # Import attributes (same package as data/)
@@ -94,6 +95,12 @@ def main() -> None:
     print(f"Output: {OUTPUT_PATH}")
 
     payload = {"by_attribute": by_attribute, "by_fighter": by_fighter}
+    if POPULARITY_PATH.exists():
+        with open(POPULARITY_PATH, encoding="utf-8") as f:
+            pop_data = json.load(f)
+        payload["popularity_scores"] = pop_data.get("scores") or {}
+    else:
+        payload["popularity_scores"] = {}
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2)

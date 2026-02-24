@@ -122,18 +122,50 @@ def _choose_low_overlap_quadruple(
     return chosen
 
 
+def _weighted_sample(
+    pool: list[str],
+    k: int,
+    popularity_scores: dict[str, float] | None,
+    default_weight: float = 0.5,
+) -> list[str]:
+    """Sample k names from pool without replacement. If popularity_scores given, use weights (higher = more likely)."""
+    if len(pool) < k:
+        return list(pool)
+    if not popularity_scores:
+        return random.sample(pool, k)
+    weights = [max(0.01, popularity_scores.get(name, default_weight)) for name in pool]
+    chosen = []
+    remaining = list(pool)
+    remaining_weights = list(weights)
+    for _ in range(k):
+        total = sum(remaining_weights)
+        if total <= 0:
+            break
+        r = random.uniform(0, total)
+        for i, w in enumerate(remaining_weights):
+            r -= w
+            if r <= 0:
+                chosen.append(remaining.pop(i))
+                remaining_weights.pop(i)
+                break
+    return chosen
+
+
 def _sample_four(
     fighter_list: list[str],
     already_used: set[str],
     obscure_only: bool,
     obscure_set: dict[str, bool],
+    popularity_scores: dict[str, float] | None = None,
 ) -> list[str] | None:
-    """Sample 4 fighters from fighter_list, not in already_used. If obscure_only, restrict to obscure."""
+    """Sample 4 fighters from fighter_list, not in already_used. If obscure_only, restrict to obscure. Optionally weight by popularity."""
     pool = [f for f in fighter_list if f not in already_used]
     if obscure_only:
         pool = [f for f in pool if obscure_set.get(f, False)]
     if len(pool) < 4:
         return None
+    if popularity_scores and len(pool) >= 4:
+        return _weighted_sample(pool, 4, popularity_scores)
     return random.sample(pool, 4)
 
 
@@ -150,10 +182,11 @@ def _sample_four_prefer_unique(
     by_fighter: dict,
     obscure_only: bool,
     obscure_set: dict[str, bool],
+    popularity_scores: dict[str, float] | None = None,
 ) -> list[str] | None:
     """
     Sample 4 fighters from fighter_list, preferring those who match only one of the chosen attributes
-    (most unique to this category). Tiers: count 1 first, then 2, then 3+.
+    (most unique to this category). Tiers: count 1 first, then 2, then 3+. Optionally weight by popularity.
     """
     pool = [f for f in fighter_list if f not in already_used]
     if obscure_only:
@@ -163,13 +196,13 @@ def _sample_four_prefer_unique(
     tier1 = [f for f in pool if _chosen_attr_count(f, chosen_attr_ids, by_fighter) == 1]
     tier2 = [f for f in pool if _chosen_attr_count(f, chosen_attr_ids, by_fighter) == 2]
     tier3 = [f for f in pool if _chosen_attr_count(f, chosen_attr_ids, by_fighter) >= 3]
+    sample_fn = lambda p, k: _weighted_sample(p, k, popularity_scores) if popularity_scores and len(p) >= k else random.sample(p, k)
     if len(tier1) >= 4:
-        return random.sample(tier1, 4)
+        return sample_fn(tier1, 4)
     if len(tier1) + len(tier2) >= 4:
         need = 4 - len(tier1)
-        return list(tier1) + random.sample(tier2, need)
-    # Not enough in tier1+tier2; take 4 from full pool (prioritizing lower count would need weighted sample)
-    return random.sample(pool, 4)
+        return list(tier1) + sample_fn(tier2, need)
+    return sample_fn(pool, 4)
 
 
 def _resolve_overlaps(
@@ -275,6 +308,7 @@ def generate_connections_puzzle(
     obscure = _obscure_by_name(fighters_list)
     by_attr = idx.get("by_attribute") or {}
     by_fighter = idx.get("by_fighter") or {}
+    popularity_scores = idx.get("popularity_scores") or {}
     use_obscure = difficulty == "hard"
 
     overlap_map = _pairwise_overlap(available)
@@ -287,12 +321,12 @@ def generate_connections_puzzle(
         for attr_info in chosen:
             fighter_list = list(attr_info["fighters"])
             four = _sample_four_prefer_unique(
-                fighter_list, used, chosen_attr_ids, by_fighter, use_obscure, obscure
+                fighter_list, used, chosen_attr_ids, by_fighter, use_obscure, obscure, popularity_scores
             )
             if four is None:
-                four = _sample_four(fighter_list, used, use_obscure, obscure)
+                four = _sample_four(fighter_list, used, use_obscure, obscure, popularity_scores)
             if four is None:
-                four = _sample_four(fighter_list, used, False, obscure)
+                four = _sample_four(fighter_list, used, False, obscure, popularity_scores)
             if four is None:
                 break
             used.update(four)
