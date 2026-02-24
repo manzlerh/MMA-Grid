@@ -8,3 +8,7 @@ This folder will hold:
 
 See `PLANNING.md` and `Design/fighterschema.md` for the conceptual fighter schema and data pipeline ideas.
 
+### Rankings
+
+- **`scrape_rankings_wikipedia.py`** – Fetches UFC rankings from [Wikipedia](https://en.wikipedia.org/wiki/UFC_rankings) and upserts into the `fighter_rankings` table (by fighter name; fighters must already exist in `fighters`). Run from project root: `python data/scrape_rankings_wikipedia.py`. Also run automatically as part of `refresh_fighters.py`.
+

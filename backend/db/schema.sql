@@ -38,6 +38,25 @@ CREATE TABLE fighters (
 CREATE INDEX idx_fighters_name ON fighters (name);
 
 -- =============================================================================
+-- FIGHTER RANKINGS
+-- =============================================================================
+-- UFC media rankings: fighters can appear in multiple divisions (e.g. pound-for-pound
+-- plus their weight class). One row per (fighter, division). rank_position: "C" (champion),
+-- "IC" (interim champion), or "1".."15". Division: e.g. "Men's pound-for-pound",
+-- "Heavyweight", "Women's Strawweight". Source: Wikipedia UFC rankings (scraped).
+CREATE TABLE fighter_rankings (
+    id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    fighter_id     UUID NOT NULL REFERENCES fighters (id) ON DELETE CASCADE,
+    division       TEXT NOT NULL,
+    rank_position  TEXT NOT NULL,
+    updated_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (fighter_id, division)
+);
+
+CREATE INDEX idx_fighter_rankings_fighter_id ON fighter_rankings (fighter_id);
+CREATE INDEX idx_fighter_rankings_division ON fighter_rankings (division);
+
+-- =============================================================================
 -- FIGHT HISTORY
 -- =============================================================================
 CREATE TABLE fight_history (

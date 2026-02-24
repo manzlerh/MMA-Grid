@@ -27,6 +27,7 @@ import clean_fighters
 import enrich_fighters
 import build_attribute_index
 import import_to_db
+import scrape_rankings_wikipedia
 
 
 FIGHTERS_ENRICHED = PROCESSED_DIR / "fighters_enriched.json"
@@ -142,6 +143,9 @@ def main() -> None:
 
     # Rebuild attribute index
     build_attribute_index.main()
+
+    # Update UFC rankings from Wikipedia (fighter_rankings table)
+    scrape_rankings_wikipedia.main()
 
     send_discord_summary(added, updated_count, unchanged_count)
 
