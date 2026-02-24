@@ -114,17 +114,43 @@ router.get('/', (req, res, next) => {
           cells: strippedCells,
         };
       } else {
-        // Connections: { groups: [{ label, color, fighters }], all_fighters } — all_fighters just names, shuffled (no group assignment)
+        // Connections: { groups: [{ label, color, fighters }], all_fighters } — all_fighters enriched with image_url
         const categories = puzzleData.categories || [];
+        const rawNames = Array.isArray(puzzleData.all_fighters) ? [...puzzleData.all_fighters] : [];
+        const nameList = rawNames.map((n) => (typeof n === 'object' && n?.name ? n.name : n));
         puzzle = {
           groups: categories.map((c, i) => ({
             label: c.name || c.label,
             color: c.color || CONNECTIONS_COLORS[i] || CONNECTIONS_COLORS[0],
             fighters: (c.fighters || []).map((name) => (typeof name === 'object' && name?.name ? { id: name.name, name: name.name } : { id: name, name })),
           })),
-          all_fighters: Array.isArray(puzzleData.all_fighters) ? [...puzzleData.all_fighters] : [],
+          all_fighters: nameList.map((name) => ({ id: name, name })),
         };
-        // Shuffle all_fighters if not already (client expects shuffled)
+        // Enrich all_fighters with image_url from DB, then shuffle
+        if (nameList.length > 0) {
+          const placeholders = nameList.map((_, i) => `$${i + 1}`).join(', ');
+          return pool
+            .query(
+              `SELECT name, image_url FROM fighters WHERE name IN (${placeholders})`,
+              nameList
+            )
+            .then((fighterRows) => {
+              const imageByName = {};
+              fighterRows.rows.forEach((r) => { imageByName[r.name] = r.image_url || null; });
+              puzzle.all_fighters = nameList.map((name) => ({ id: name, name, image_url: imageByName[name] || null }));
+              puzzle.groups.forEach((g) => {
+                g.fighters = (g.fighters || []).map((f) => ({ ...f, image_url: imageByName[f.name] || null }));
+              });
+              if (puzzle.all_fighters.length > 0) {
+                for (let i = puzzle.all_fighters.length - 1; i > 0; i--) {
+                  const j = Math.floor(Math.random() * (i + 1));
+                  [puzzle.all_fighters[i], puzzle.all_fighters[j]] = [puzzle.all_fighters[j], puzzle.all_fighters[i]];
+                }
+              }
+              res.set('Cache-Control', 'public, max-age=3600');
+              res.json({ gameType, puzzle, difficulty: row.difficulty, puzzleDate });
+            });
+        }
         if (puzzle.all_fighters.length > 0) {
           for (let i = puzzle.all_fighters.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));

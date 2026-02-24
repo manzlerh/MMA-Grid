@@ -1,4 +1,4 @@
-import { Fragment } from 'react'
+import { Fragment, useState } from 'react'
 import { motion } from 'framer-motion'
 
 const shakeVariants = {
@@ -11,6 +11,75 @@ const shakeVariants = {
 
 const labelClass =
   'aspect-square bg-ufc-gold/10 border border-ufc-gold/30 flex items-center justify-center text-ufc-gold font-semibold text-xs md:text-sm text-center p-1 overflow-hidden'
+
+function initials(name) {
+  if (!name || typeof name !== 'string') return '?'
+  const parts = name.trim().split(/\s+/)
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+  return (name[0] || '?').toUpperCase()
+}
+
+function FilledCell({ fighter, locked, canInteract, onClick, isShaking }) {
+  const [imageFailed, setImageFailed] = useState(false)
+  const showHeadshot = fighter?.image_url && !imageFailed
+  const CellWrapper = isShaking ? motion.div : Fragment
+  const wrapperProps = isShaking
+    ? { animate: 'shake', variants: shakeVariants, className: 'aspect-square' }
+    : {}
+
+  const content = (
+    <button
+      type="button"
+      disabled
+      title={fighter?.name ?? ''}
+      className={`w-full aspect-square flex flex-col items-center justify-end text-center p-1 transition-colors text-xs md:text-sm overflow-hidden relative
+        ${locked
+          ? 'border border-green-500'
+          : 'border border-ufc-red'}
+      `}
+      style={showHeadshot ? {
+        backgroundImage: `url(${fighter.image_url})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      } : undefined}
+    >
+      {showHeadshot ? (
+        <>
+          <img
+            src={fighter.image_url}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover opacity-0 pointer-events-none"
+            onError={() => setImageFailed(true)}
+          />
+          <span
+            className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"
+            aria-hidden
+          />
+          <span className="relative z-10 text-white font-semibold break-words leading-tight w-full">
+            {fighter?.name ?? ''}
+          </span>
+        </>
+      ) : (
+        <span className={`w-full h-full flex items-center justify-center font-bold text-white ${locked ? 'bg-green-600' : 'bg-ufc-red/90'}`}>
+          {initials(fighter?.name)}
+        </span>
+      )}
+    </button>
+  )
+
+  return (
+    <CellWrapper {...wrapperProps}>
+      <motion.div
+        initial={{ scale: 0.8 }}
+        animate={{ scale: 1 }}
+        transition={{ duration: 0.2 }}
+        className="aspect-square w-full"
+      >
+        {content}
+      </motion.div>
+    </CellWrapper>
+  )
+}
 
 export default function GridBoard({ puzzle = {}, board = [], onCellClick, lockedCells = new Set(), shakingCell = null, gameOver = false }) {
   const columns = puzzle.columns ?? ['', '', '']
@@ -50,42 +119,35 @@ export default function GridBoard({ puzzle = {}, board = [], onCellClick, locked
             const wrapperProps = isShaking
               ? { animate: 'shake', variants: shakeVariants, className: 'aspect-square' }
               : {}
+
+            if (!isEmpty) {
+              return (
+                <FilledCell
+                  key={`${r}-${c}`}
+                  fighter={fighter}
+                  locked={locked}
+                  canInteract={canInteract}
+                  isShaking={isShaking}
+                />
+              )
+            }
+
             const cellContent = (
               <button
                 key={`${r}-${c}`}
                 type="button"
                 disabled={!isEmpty}
                 onClick={() => canInteract && isEmpty && onCellClick?.(r, c)}
-                title={fighter?.name ?? ''}
+                title=""
                 className={`w-full aspect-square flex items-center justify-center text-center p-1 transition-colors text-xs md:text-sm overflow-hidden
-                  ${isEmpty
-                    ? canInteract
-                      ? 'bg-ufc-card border border-ufc-border cursor-pointer hover:border-ufc-red text-ufc-text'
-                      : 'bg-ufc-card border-2 border-ufc-red cursor-not-allowed text-ufc-text'
-                    : locked
-                      ? 'bg-green-600 border border-green-500 text-white'
-                      : 'bg-ufc-red/90 border border-ufc-red text-white'}
+                  ${canInteract
+                    ? 'bg-ufc-card border border-ufc-border cursor-pointer hover:border-ufc-red text-ufc-text'
+                    : 'bg-ufc-card border-2 border-ufc-red cursor-not-allowed text-ufc-text'}
                 `}
               >
-                <span className="block w-full break-words leading-tight">
-                  {fighter?.name ?? ''}
-                </span>
+                <span className="block w-full break-words leading-tight" />
               </button>
             )
-            if (!isEmpty) {
-              return (
-                <CellWrapper key={`wrap-${r}-${c}`} {...wrapperProps}>
-                  <motion.div
-                    initial={{ scale: 0.8 }}
-                    animate={{ scale: 1 }}
-                    transition={{ duration: 0.2 }}
-                    className="aspect-square w-full"
-                  >
-                    {cellContent}
-                  </motion.div>
-                </CellWrapper>
-              )
-            }
             return <CellWrapper key={`wrap-${r}-${c}`} {...wrapperProps}>{cellContent}</CellWrapper>
           })}
         </Fragment>
