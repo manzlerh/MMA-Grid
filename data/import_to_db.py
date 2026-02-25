@@ -13,6 +13,8 @@ from dotenv import load_dotenv
 # Project root: one level up from data/
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_PROCESSED = PROJECT_ROOT / "data" / "processed"
+FIGHTERS_FINAL = DATA_PROCESSED / "fighters_final.json"
+FIGHTERS_ENRICHED = DATA_PROCESSED / "fighters_enriched.json"
 SCHEMA_PATH = PROJECT_ROOT / "backend" / "db" / "schema.sql"
 ENV_PATH = PROJECT_ROOT / ".env"
 
@@ -166,7 +168,11 @@ def insert_fight_history(conn, records: list[dict], name_to_id: dict[str, str]) 
 
 
 def main():
-    fighters_path = DATA_PROCESSED / "fighters_enriched.json"
+    # Prefer fighters_final.json (has image_url from scrape_headshots); fallback to fighters_enriched.json
+    if FIGHTERS_FINAL.exists():
+        fighters_path = FIGHTERS_FINAL
+    else:
+        fighters_path = FIGHTERS_ENRICHED
     fight_history_path = DATA_PROCESSED / "fight_history.json"
 
     if not fighters_path.exists():
@@ -174,6 +180,7 @@ def main():
         sys.exit(1)
 
     fighters = load_fighters(fighters_path)
+    print(f"Loading fighters from {fighters_path.name}")
     if not fighters:
         print("No fighters to import.")
         return
