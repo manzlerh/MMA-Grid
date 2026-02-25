@@ -38,35 +38,29 @@ function FilledCell({ fighter, locked, canInteract, onClick, isShaking }) {
       disabled
       title={fighter?.name ?? ''}
       className={`w-full aspect-square flex flex-col items-center justify-end text-center p-1 transition-colors text-xs md:text-sm overflow-hidden relative
+        ${showHeadshot ? 'bg-ufc-card' : ''}
         ${locked
           ? 'border border-green-500'
           : 'border border-ufc-red'}
       `}
-      style={showHeadshot ? {
-        backgroundImage: `url(${sanitizedUrl})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      } : undefined}
     >
-      {/* todo: remove this debug log */}
-      {typeof window !== 'undefined' && console.log(
-        '[Grid FilledCell] render',
-        {
-          name: fighter?.name,
-          image_url: fighter?.image_url,
-          sanitized: sanitizedUrl,
-          showHeadshot,
-          imageFailed,
-        }
-      )}
       {showHeadshot ? (
         <>
+          {/* Headshot at full brightness (no blend so faces stay visible) */}
+          <div
+            className="absolute inset-0 bg-ufc-card"
+            style={{
+              backgroundImage: `url(${sanitizedUrl})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+            aria-hidden
+          />
           <img
             src={sanitizedUrl}
             alt=""
             className="absolute inset-0 w-full h-full object-cover opacity-0 pointer-events-none"
             onError={(e) => {
-              // todo: remove this debug log
               console.warn('[Grid FilledCell] image load error', {
                 name: fighter?.name,
                 image_url: fighter?.image_url,
