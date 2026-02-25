@@ -7,8 +7,8 @@ const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const GRACE_HOURS = 26;
 const GRACE_MS = GRACE_HOURS * 60 * 60 * 1000;
 
-function todayUTC() {
-  return new Date().toISOString().slice(0, 10);
+function todayEST() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
 }
 
 /**

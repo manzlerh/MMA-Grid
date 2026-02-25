@@ -5,6 +5,7 @@ import { useUser } from '../context'
 import { useConnectionsGame } from '../hooks'
 import { generateConnectionsShareText } from '../utils/shareText'
 import { getStoredResult, setStoredResult } from '../utils/storedResult'
+import { todayEST, getNextPuzzleCountdownEST } from '../utils/dailyPuzzleDate'
 import { Navbar, ResultModal, StatsModal } from '../components/shared'
 import { ConnectionsBoard, MistakeTracker, ConnectionsSkeleton } from '../components/connections'
 
@@ -46,21 +47,6 @@ function todayFormatted() {
   })
 }
 
-function todayYYYYMMDD() {
-  return new Date().toISOString().slice(0, 10)
-}
-
-function getNextPuzzleCountdown() {
-  const now = new Date()
-  const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
-  const nextMidnightUTC = new Date(todayUTC.getTime() + 24 * 60 * 60 * 1000)
-  const ms = nextMidnightUTC.getTime() - Date.now()
-  if (ms <= 0) return '0:00:00'
-  const s = Math.floor(ms / 1000) % 60
-  const m = Math.floor(ms / 60000) % 60
-  const h = Math.floor(ms / 3600000)
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-}
 
 export default function ConnectionsGame({ previewDate }) {
   const { userId, todayCompleted, markGameCompleted, saveScore } = useUser()
@@ -75,7 +61,7 @@ export default function ConnectionsGame({ previewDate }) {
   const [alreadyPlayed, setAlreadyPlayed] = useState(false)
   const [storedResult, setStoredResultState] = useState(null)
   const [countdown, setCountdown] = useState('0:00:00')
-  const effectiveDate = previewDate || todayYYYYMMDD()
+  const effectiveDate = previewDate || todayEST()
 
   const {
     fighters,
@@ -122,7 +108,7 @@ export default function ConnectionsGame({ previewDate }) {
 
   useEffect(() => {
     if (!alreadyPlayed) return
-    const tick = () => setCountdown(getNextPuzzleCountdown())
+    const tick = () => setCountdown(getNextPuzzleCountdownEST())
     tick()
     const id = setInterval(tick, 1000)
     return () => clearInterval(id)
@@ -141,7 +127,7 @@ export default function ConnectionsGame({ previewDate }) {
     if (!(gameWon || gameOver) || completionHandled.current || !userId) return
     completionHandled.current = true
     markGameCompleted('connections')
-    const puzzleDate = todayYYYYMMDD()
+    const puzzleDate = todayEST()
     const mistakesUsed = 3 - mistakesLeft
     const timeSeconds =
       gameStartTime.current != null

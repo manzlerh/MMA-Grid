@@ -3,8 +3,9 @@ const router = express.Router();
 
 const CONNECTIONS_COLORS = ['yellow', 'green', 'blue', 'purple'];
 
-function todayUTC() {
-  return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+/** Current date in Eastern Time (America/New_York) as YYYY-MM-DD. */
+function todayEST() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
 }
 
 function parsePuzzleData(raw) {
@@ -34,7 +35,7 @@ router.get('/meta', (req, res, next) => {
 
   let puzzleDate = (req.query.date || '').trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(puzzleDate)) {
-    puzzleDate = todayUTC();
+    puzzleDate = todayEST();
   }
 
   const sql = `
@@ -71,7 +72,7 @@ router.get('/', (req, res, next) => {
 
   let puzzleDate = (req.query.date || '').trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(puzzleDate)) {
-    puzzleDate = todayUTC();
+    puzzleDate = todayEST();
   }
 
   const sql = `

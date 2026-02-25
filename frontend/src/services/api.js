@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { todayEST } from '../utils/dailyPuzzleDate'
 
 const baseURL =
   import.meta.env.VITE_API_URL ||
@@ -18,13 +19,13 @@ export async function searchFighters(query) {
 /**
  * GET /daily?gameType={gameType}&date=YYYY-MM-DD
  * @param {'grid' | 'connections'} gameType
- * @param {{ date?: string }} [opts] optional date (YYYY-MM-DD); if omitted, client sends today UTC so server and client agree on "today"
+ * @param {{ date?: string }} [opts] optional date (YYYY-MM-DD); if omitted, client sends today in EST so server and client agree on "today"
  * @returns {Promise<{ gameType, puzzle, difficulty, puzzleDate? }>}
  */
 export async function getDailyPuzzle(gameType, opts = {}) {
   const params = { gameType }
   if (opts.date) params.date = opts.date
-  else params.date = new Date().toISOString().slice(0, 10) // client's today in UTC
+  else params.date = todayEST()
   const { data } = await api.get('/daily', { params })
   return data
 }

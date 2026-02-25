@@ -14,8 +14,8 @@ const validateLimiter = rateLimit({
 
 router.use(validateLimiter);
 
-function todayUTC() {
-  return new Date().toISOString().slice(0, 10);
+function todayEST() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
 }
 
 function parsePuzzleData(raw) {
@@ -57,7 +57,7 @@ function gridValidate(req, res, next) {
 
   const puzzleDate = /^\d{4}-\d{2}-\d{2}$/.test((body.puzzleDate || '').trim())
     ? body.puzzleDate.trim()
-    : todayUTC();
+    : todayEST();
 
   const cellKey = `${Number(row)},${Number(col)}`;
 
@@ -139,7 +139,7 @@ router.post('/connections', (req, res, next) => {
 
   const puzzleDate = /^\d{4}-\d{2}-\d{2}$/.test((body.puzzleDate || '').trim())
     ? body.puzzleDate.trim()
-    : todayUTC();
+    : todayEST();
 
   pool
     .query(
