@@ -56,10 +56,34 @@ def _normalize_src(src: str) -> str | None:
     return src if src.startswith("http") else None
 
 
-def extract_ufc_headshot(html: str, page_url: str) -> str | None:
-    """Parse UFC athlete page HTML and return the main headshot image src, or None."""
+def _url_matches_fighter(url: str, fighter_slug: str) -> bool:
+    """True if the URL path/filename identifies this fighter. UFC uses LASTNAME_FIRSTNAME
+    in image filenames (e.g. POIRIER_DUSTIN, HOLLOWAY_MAX), not the page slug (dustin-poirier).
+    """
+    if not fighter_slug:
+        return False
+    url_lower = url.lower()
+    if fighter_slug.lower() in url_lower:
+        return True
+    parts = fighter_slug.split("-")
+    if len(parts) >= 2:
+        ufc_style = (parts[-1] + "_" + parts[0]).lower()
+        if ufc_style in url_lower:
+            return True
+    elif parts:
+        if parts[0] in url_lower:
+            return True
+    return False
+
+
+def extract_ufc_headshot(html: str, page_url: str, fighter_slug: str) -> str | None:
+    """Parse UFC athlete page HTML and return the main headshot image src, or None.
+    For event_results_athlete_headshot images (Last Fight section): if the first URL
+    doesn't contain the fighter's slug, use the second (page athlete is blue corner).
+    """
     soup = BeautifulSoup(html, "html.parser")
-    candidates = []
+    event_headshots = []  # event_results_athlete_headshot, in document order
+    profile_candidates = []  # athlete_bio, hero, cloudfront, etc.
 
     for tag in soup.find_all("img", src=True):
         src = tag.get("src")
@@ -68,23 +92,33 @@ def extract_ufc_headshot(html: str, page_url: str) -> str | None:
         full = _normalize_src(src)
         if not full:
             continue
-        # Prefer headshot-style URL
         if "event_results_athlete_headshot" in full:
-            return full
+            event_headshots.append(full)
+            continue
         if "athlete_bio" in full or "ufc.com/images" in full or "cloudfront" in full:
-            candidates.append(full)
+            profile_candidates.append(full)
         classes = " ".join(tag.get("class", []) if tag.get("class") else [])
         if "hero" in classes or "athlete" in classes:
-            candidates.append(full)
+            profile_candidates.append(full)
 
-    if candidates:
-        return candidates[0]
+    # Last Fight section: first headshot = red corner (often opponent), second = page athlete.
+    if len(event_headshots) >= 2:
+        if _url_matches_fighter(event_headshots[0], fighter_slug):
+            return event_headshots[0]
+        return event_headshots[1]
+    if len(event_headshots) == 1 and _url_matches_fighter(event_headshots[0], fighter_slug):
+        return event_headshots[0]
+
+    if profile_candidates:
+        return profile_candidates[0]
 
     hero_div = soup.find("div", class_=lambda c: c and "hero-profile" in " ".join(c))
     if hero_div:
         img = hero_div.find("img", src=True)
         if img:
-            return _normalize_src(img["src"])
+            u = _normalize_src(img["src"])
+            if u:
+                return u
 
     og = soup.find("meta", property="og:image")
     if og and og.get("content"):
@@ -137,7 +171,7 @@ def fetch_headshot(fighter: dict, session: requests.Session, log_errors: list) -
         if r.status_code != 200:
             log_errors.append(f"{name!r}: UFC status {r.status_code}")
             return None
-        url = extract_ufc_headshot(r.text, ufc_url)
+        url = extract_ufc_headshot(r.text, ufc_url, slug)
         if url:
             return url
         log_errors.append(f"{name!r}: UFC page OK but no headshot found")
