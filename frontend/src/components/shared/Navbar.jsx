@@ -18,7 +18,8 @@ export default function Navbar() {
   return (
     <header className="bg-ufc-card border-b border-ufc-border">
       <nav className="max-w-6xl mx-auto px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <NavLink to="/" className="font-display text-2xl text-ufc-gold tracking-wide">
+        <NavLink to="/" className="font-display text-2xl text-ufc-gold tracking-wide flex items-center">
+          <img src="/MMA Grid Icon 2.svg" alt="" className="h-6 w-6 shrink-0 mr-2" aria-hidden />
           MMA TRIVIA
         </NavLink>
         <div className="flex items-center gap-2">

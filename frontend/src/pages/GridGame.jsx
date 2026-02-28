@@ -7,7 +7,7 @@ import { getStoredResult, setStoredResult, clearStoredResult } from '../utils/st
 import { getGameState, setGameState, clearGameState } from '../utils/gameState'
 import { todayEST, getNextPuzzleCountdownEST } from '../utils/dailyPuzzleDate'
 import { isDev, dayBefore, dayAfter, formatDateForDisplay } from '../utils/devUtils'
-import { Navbar, ResultModal, StatsModal } from '../components/shared'
+import { Navbar, ResultModal, StatsModal, SEOMeta } from '../components/shared'
 import { GridBoard, CellModal, GridSkeleton } from '../components/grid'
 import { MistakeTracker } from '../components/connections'
 
@@ -237,6 +237,10 @@ export default function GridGame({ previewDate }) {
 
   return (
     <div className="min-h-screen bg-ufc-dark text-ufc-text">
+      <SEOMeta
+        title="MMA Grid — Daily Challenge"
+        description="Fill the 3x3 grid with MMA fighters matching both row and column attributes. A new puzzle every day."
+      />
       <Navbar />
       <main className="max-w-2xl mx-auto px-4 py-6">
         {alreadyPlayed && (

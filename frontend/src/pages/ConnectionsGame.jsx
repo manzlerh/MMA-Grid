@@ -8,7 +8,7 @@ import { getStoredResult, setStoredResult, clearStoredResult } from '../utils/st
 import { getGameState, setGameState, clearGameState } from '../utils/gameState'
 import { todayEST, getNextPuzzleCountdownEST } from '../utils/dailyPuzzleDate'
 import { isDev, dayBefore, dayAfter, formatDateForDisplay } from '../utils/devUtils'
-import { Navbar, ResultModal, StatsModal } from '../components/shared'
+import { Navbar, ResultModal, StatsModal, SEOMeta } from '../components/shared'
 import { ConnectionsBoard, MistakeTracker, ConnectionsSkeleton } from '../components/connections'
 
 const GROUP_COLORS = {
@@ -257,6 +257,10 @@ export default function ConnectionsGame({ previewDate }) {
 
   return (
     <div className="min-h-screen bg-ufc-dark text-ufc-text">
+      <SEOMeta
+        title="MMA Connections — Daily Challenge"
+        description="Group 16 MMA fighters into 4 connected categories. A new puzzle every day."
+      />
       <Navbar />
       <main className="max-w-2xl mx-auto px-4 py-6">
         {alreadyPlayed && (

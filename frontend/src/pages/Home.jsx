@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useUser } from '../context'
-import { Navbar } from '../components/shared'
+import { Navbar, SEOMeta } from '../components/shared'
 
 export default function Home() {
   const { streak, gamesPlayed, todayCompleted } = useUser()
@@ -9,6 +9,10 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-ufc-dark text-ufc-text">
+      <SEOMeta
+        title="Daily MMA Trivia Games"
+        description="Test your MMA knowledge with daily Grid and Connections puzzles. New challenges every day."
+      />
       <Navbar />
       <main className="max-w-4xl mx-auto px-4 py-12">
         <section className="text-center mb-12">
