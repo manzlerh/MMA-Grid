@@ -58,15 +58,22 @@ export function useGridGame(puzzle, options = {}) {
 
       setIsValidating(true)
       try {
-        const { valid, fighter: validatedFighter } = await validateGridAnswer(
+        const { valid, fighter: validatedFighter, popularity: userPopularity } = await validateGridAnswer(
           { row, col },
           fighter.name,
           puzzleDate ? { puzzleDate } : {}
         )
         if (valid && validatedFighter) {
+          const cells = puzzle?.cells || {}
+          const cellMeta = cells[key]
+          const minPop = cellMeta?.min_popularity
+          const userPop = typeof userPopularity === 'number' && userPopularity > 0 ? userPopularity : 0.15
+          const points = minPop != null
+            ? Math.min(100, Math.round(100 * (minPop / userPop)))
+            : (100 - (3 - attemptsLeft) * 15)
           setBoard((prev) => {
             const next = prev.map((r) => [...r])
-            next[row][col] = validatedFighter
+            next[row][col] = { ...validatedFighter, cellScore: points }
             return next
           })
           setLockedCells((prev) => {
@@ -74,7 +81,7 @@ export function useGridGame(puzzle, options = {}) {
             if (next.size === 9) setGameWon(true)
             return next
           })
-          setScore((s) => s + (100 - (3 - attemptsLeft) * 15))
+          setScore((s) => s + points)
           setSelectedCell(null)
         } else {
           setLastFailedCell({ row, col })
@@ -89,7 +96,7 @@ export function useGridGame(puzzle, options = {}) {
         setIsValidating(false)
       }
     },
-    [selectedCell, gameOver, gameWon, attemptsLeft, puzzleDate]
+    [selectedCell, gameOver, gameWon, attemptsLeft, puzzleDate, puzzle]
   )
 
   const usedFighterNames = useMemo(() => {

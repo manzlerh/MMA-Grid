@@ -126,7 +126,7 @@ def _weighted_sample(
     pool: list[str],
     k: int,
     popularity_scores: dict[str, float] | None,
-    default_weight: float = 0.5,
+    default_weight: float = 0.15,
 ) -> list[str]:
     """Sample k names from pool without replacement. If popularity_scores given, use weights (higher = more likely)."""
     if len(pool) < k:

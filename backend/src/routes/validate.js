@@ -36,12 +36,15 @@ function normalizeName(name) {
 }
 
 // POST /api/validate — grid (body: { cell: { row, col }, fighterName } or { puzzleDate, row, col, fighterName })
-// Returns { valid, fighter, rarity_score }. Fighter from DB (name, nationality, gym, weight_classes, image_url).
+// Returns { valid, fighter, popularity }. Fighter from DB (name, nationality, gym, weight_classes, image_url).
 router.post('/', gridValidate);
 router.post('/grid', gridValidate);
 
 function gridValidate(req, res, next) {
   const body = req.body || {};
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('[validate] body keys:', Object.keys(body), 'cell:', body.cell, 'fighterName:', body.fighterName ? '(present)' : '(missing)', 'puzzleDate:', body.puzzleDate);
+  }
   const cell = body.cell || {};
   const row = cell.row != null ? cell.row : body.row;
   const col = cell.col != null ? cell.col : body.col;
@@ -52,14 +55,19 @@ function gridValidate(req, res, next) {
   }
 
   if (row == null || col == null || !fighterName) {
-    return res.status(400).json({ valid: false, fighter: null, rarity_score: 0, error: 'Missing cell or fighterName' });
+    return res.status(400).json({ valid: false, fighter: null, popularity: 0.15, error: 'Missing cell or fighterName' });
+  }
+  const rowNum = parseInt(row, 10);
+  const colNum = parseInt(col, 10);
+  if (Number.isNaN(rowNum) || Number.isNaN(colNum) || rowNum < 0 || rowNum > 2 || colNum < 0 || colNum > 2) {
+    return res.status(400).json({ valid: false, fighter: null, popularity: 0.15, error: 'Invalid cell coordinates' });
   }
 
   const puzzleDate = /^\d{4}-\d{2}-\d{2}$/.test((body.puzzleDate || '').trim())
     ? body.puzzleDate.trim()
     : todayEST();
 
-  const cellKey = `${Number(row)},${Number(col)}`;
+  const cellKey = `${rowNum},${colNum}`;
 
   pool
     .query(
@@ -70,13 +78,48 @@ function gridValidate(req, res, next) {
       const row_db = result.rows[0];
       const puzzleData = row_db ? parsePuzzleData(row_db.puzzle_data) : null;
       if (!puzzleData || !puzzleData.cells) {
-        return res.status(404).json({ valid: false, fighter: null, rarity_score: 0, error: 'No puzzle today' });
+        return res.status(404).json({ valid: false, fighter: null, popularity: 0.15, error: 'No puzzle today' });
       }
 
-      const validList = puzzleData.cells[cellKey];
-      if (!Array.isArray(validList)) {
-        return res.status(400).json({ valid: false, fighter: null, rarity_score: 0, error: 'Invalid cell' });
+      const cellKeys = Object.keys(puzzleData.cells);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('[validate] puzzleDate:', puzzleDate, 'cellKeys:', cellKeys, 'looking for:', cellKey);
       }
+
+      let cellRaw = puzzleData.cells[cellKey];
+      if (cellRaw === undefined) {
+        cellRaw = puzzleData.cells[`${rowNum}, ${colNum}`];
+      }
+      if (cellRaw === undefined) {
+        const cellIndex = String(rowNum * 3 + colNum);
+        cellRaw = puzzleData.cells[cellIndex];
+      }
+      let validList = Array.isArray(cellRaw) ? cellRaw : (cellRaw && cellRaw.valid_fighters);
+      if (validList != null && typeof validList === 'string') {
+        try {
+          validList = JSON.parse(validList);
+        } catch {
+          validList = [];
+        }
+      }
+      if (!Array.isArray(validList)) {
+        validList = [];
+      }
+      if (!validList.length) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[validate] Invalid cell: cellRaw type', typeof cellRaw, 'validList length', validList.length, 'cellRaw sample', cellRaw == null ? null : (typeof cellRaw === 'object' ? Object.keys(cellRaw) : cellRaw));
+        }
+        return res.status(400).json({
+          valid: false,
+          fighter: null,
+          popularity: 0.15,
+          error: 'Invalid cell',
+          debug: process.env.NODE_ENV !== 'production' ? { cellKey, cellKeys, hasCellRaw: cellRaw != null, validListLength: validList.length } : undefined,
+        });
+      }
+
+      const popularityScores = puzzleData.popularity_scores || {};
+      const defaultPop = 0.15;
 
       const nameNorm = normalizeName(fighterName);
       const matchedName = validList.find((n) => normalizeName(n) === nameNorm);
@@ -90,17 +133,19 @@ function gridValidate(req, res, next) {
           .then((fResult) => {
             const byNick = fResult.rows.find((r) => validList.some((v) => normalizeName(v) === normalizeName(r.name)));
             if (byNick) {
-              return sendGridValid(res, pool, byNick.name, Math.round(1000 / validList.length));
+              const pop = popularityScores[byNick.name] ?? defaultPop;
+              return sendGridValid(res, pool, byNick.name, pop);
             }
-            return res.json({ valid: false, fighter: null, rarity_score: 0 });
+            return res.json({ valid: false, fighter: null, popularity: 0 });
           });
       }
-      return sendGridValid(res, pool, matchedName, Math.round(1000 / validList.length));
+      const pop = popularityScores[matchedName] ?? defaultPop;
+      return sendGridValid(res, pool, matchedName, pop);
     })
     .catch((err) => next(err));
 }
 
-function sendGridValid(res, pool, fighterName, rarity_score) {
+function sendGridValid(res, pool, fighterName, popularity) {
   return pool
     .query(
       `SELECT name, nationality, gym, weight_classes, image_url FROM fighters WHERE name = $1 LIMIT 1`,
@@ -117,10 +162,10 @@ function sendGridValid(res, pool, fighterName, rarity_score) {
             image_url: row.image_url,
           }
         : { name: fighterName };
-      res.json({ valid: true, fighter, rarity_score });
+      res.json({ valid: true, fighter, popularity: Number(popularity) });
     })
     .catch(() => {
-      res.json({ valid: true, fighter: { name: fighterName }, rarity_score });
+      res.json({ valid: true, fighter: { name: fighterName }, popularity: Number(popularity) });
     });
 }
 

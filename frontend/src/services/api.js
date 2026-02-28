@@ -35,23 +35,29 @@ export async function getDailyPuzzle(gameType, opts = {}) {
  * @param {{ row: number, col: number }} cell
  * @param {string} fighterName
  * @param {{ puzzleDate?: string }} [opts] optional puzzleDate (YYYY-MM-DD) for preview mode
- * @returns {Promise<{ valid: boolean, fighter: object | null }>}
+ * @returns {Promise<{ valid: boolean, fighter: object | null, popularity?: number }>}
  */
 export async function validateGridAnswer(cell, fighterName, opts = {}) {
   const body = { cell, fighterName }
   if (opts.puzzleDate) body.puzzleDate = opts.puzzleDate
-  const { data } = await api.post('/validate', body)
-  // todo: remove this debug log
-  if (import.meta.env.DEV) {
-    console.log('[validateGridAnswer] response', {
-      cell,
-      fighterName,
-      puzzleDate: opts.puzzleDate,
-      fighter: data?.fighter,
-      image_url: data?.fighter?.image_url,
-    })
+  try {
+    const { data } = await api.post('/validate', body)
+    if (import.meta.env.DEV) {
+      console.log('[validateGridAnswer] response', {
+        cell,
+        fighterName,
+        puzzleDate: opts.puzzleDate,
+        valid: data?.valid,
+        fighter: data?.fighter,
+      })
+    }
+    return data
+  } catch (err) {
+    if (import.meta.env.DEV && err.response?.data) {
+      console.warn('[validateGridAnswer] error response', err.response.status, err.response.data)
+    }
+    throw err
   }
-  return data
 }
 
 /**

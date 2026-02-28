@@ -121,7 +121,7 @@ export default function GridGame({ previewDate }) {
         won: result.gameWon,
         shareText: shareTextForStorage,
         completedAt: new Date().toISOString(),
-        board: result.board.map((row) => row.map((c) => (c ? { name: c.name } : null))),
+        board: result.board.map((row) => row.map((c) => (c ? { name: c.name, image_url: c.image_url, cellScore: c.cellScore } : null))),
       })
       clearGameState('grid', puzzleDate)
       saveScore({

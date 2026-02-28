@@ -102,12 +102,40 @@ router.get('/', (req, res, next) => {
 
       let puzzle;
       if (gameType === 'grid') {
-        // Strip valid_fighters: send only count per cell so client cannot see answers
+        // Strip valid_fighters; send count, min_popularity, best_fighter (for scoring and game-over reveal)
         const cells = puzzleData.cells || {};
         const strippedCells = {};
+        const bestFighterNames = [];
         for (const [key, val] of Object.entries(cells)) {
           const list = Array.isArray(val) ? val : (val && val.valid_fighters) || [];
-          strippedCells[key] = { count: list.length };
+          const minPop = typeof val === 'object' && val != null && 'min_popularity' in val ? val.min_popularity : 0.15;
+          const bestName = typeof val === 'object' && val != null && val.best_fighter ? val.best_fighter : null;
+          strippedCells[key] = { count: list.length, min_popularity: minPop, best_fighter: bestName ? { name: bestName } : null };
+          if (bestName) bestFighterNames.push(bestName);
+        }
+        // Enrich best_fighter with image_url for game-over display
+        const uniqueNames = [...new Set(bestFighterNames)];
+        if (uniqueNames.length > 0) {
+          const placeholders = uniqueNames.map((_, i) => `$${i + 1}`).join(', ');
+          return pool
+            .query(`SELECT name, image_url FROM fighters WHERE name IN (${placeholders})`, uniqueNames)
+            .then((imgResult) => {
+              const imageByName = {};
+              (imgResult.rows || []).forEach((r) => { imageByName[r.name] = r.image_url || null; });
+              for (const [key, cell] of Object.entries(strippedCells)) {
+                if (cell.best_fighter && cell.best_fighter.name) {
+                  cell.best_fighter.image_url = imageByName[cell.best_fighter.name] || null;
+                }
+              }
+              puzzle = {
+                rows: Array.isArray(puzzleData.rows) ? puzzleData.rows : [],
+                columns: Array.isArray(puzzleData.columns) ? puzzleData.columns : (puzzleData.cols || []),
+                cells: strippedCells,
+              };
+              res.set('Cache-Control', 'public, max-age=3600');
+              res.json({ gameType, puzzle, difficulty: row.difficulty, puzzleDate });
+            })
+            .catch((err) => next(err));
         }
         puzzle = {
           rows: Array.isArray(puzzleData.rows) ? puzzleData.rows : [],

@@ -55,14 +55,22 @@ def connections_difficulty_for_day_index(day_index: int) -> str:
 
 
 def puzzle_data_grid(puzzle: dict) -> dict:
-    """Build puzzle_data for DB including row_attr_ids/col_attr_ids for exclusion tracking."""
+    """Build puzzle_data for DB including row_attr_ids/col_attr_ids and per-cell popularity for scoring."""
+    cells = puzzle.get("cells") or {}
+    # Store full cell object: valid_fighters, min_popularity, best_fighter (backend uses valid_fighters for validate)
+    cell_data = {}
+    for k, v in cells.items():
+        valid = v.get("valid_fighters", []) if isinstance(v, dict) else (v if isinstance(v, list) else [])
+        cell_data[k] = {
+            "valid_fighters": valid,
+            "min_popularity": v.get("min_popularity", 0.15) if isinstance(v, dict) else 0.15,
+            "best_fighter": v.get("best_fighter") if isinstance(v, dict) else None,
+        }
     data = {
         "columns": [c["label"] for c in puzzle["cols"]],
         "rows": [r["label"] for r in puzzle["rows"]],
-        "cells": {
-            k: v.get("valid_fighters", [])
-            for k, v in (puzzle.get("cells") or {}).items()
-        },
+        "cells": cell_data,
+        "popularity_scores": puzzle.get("popularity_scores") or {},
     }
     data["row_attr_ids"] = [r["id"] for r in puzzle["rows"]]
     data["col_attr_ids"] = [c["id"] for c in puzzle["cols"]]

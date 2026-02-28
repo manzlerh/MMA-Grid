@@ -65,6 +65,34 @@ def _rows_and_cols_category_ok(row_triple: list[dict], col_triple: list[dict]) -
     # Only weightclass is allowed to appear in both
     return shared <= {"weightclass"}
 
+DEFAULT_POPULARITY = 0.15
+
+
+def _enrich_cells_with_popularity(cells: dict, popularity_scores: dict[str, float]) -> tuple[dict, dict[str, float]]:
+    """
+    Add min_popularity and best_fighter to each cell; return (enriched_cells, popularity_scores_subset).
+    best_fighter = valid fighter with highest popularity (most popular correct answer for that cell).
+    """
+    pop = popularity_scores or {}
+    enriched: dict = {}
+    all_names: set[str] = set()
+    for key, data in cells.items():
+        valid = data.get("valid_fighters") or []
+        if not valid:
+            enriched[key] = {**data, "min_popularity": DEFAULT_POPULARITY, "best_fighter": None}
+            continue
+        pops = [(name, pop.get(name, DEFAULT_POPULARITY)) for name in valid]
+        min_pop = min(p for _, p in pops)
+        best_name = max(pops, key=lambda x: x[1])[0]
+        all_names.update(valid)
+        enriched[key] = {
+            **data,
+            "min_popularity": min_pop,
+            "best_fighter": best_name,
+        }
+    subset = {name: pop.get(name, DEFAULT_POPULARITY) for name in all_names}
+    return enriched, subset
+
 
 def generate_grid_puzzle(
     difficulty: str = "normal",
@@ -105,10 +133,15 @@ def generate_grid_puzzle(
         if quality <= 0.6:
             continue
 
+        raw_cells = result.get("cells", {})
+        popularity_scores = idx.get("popularity_scores") or {}
+        cells, popularity_scores_subset = _enrich_cells_with_popularity(raw_cells, popularity_scores)
+
         return {
             "rows": [{"id": t["id"], "label": t["label"]} for t in row_triple],
             "cols": [{"id": t["id"], "label": t["label"]} for t in col_triple],
-            "cells": result.get("cells", {}),
+            "cells": cells,
+            "popularity_scores": popularity_scores_subset,
             "difficulty": difficulty,
             "quality_score": quality,
             "min_cell_count": result.get("min_cell_count"),
@@ -167,10 +200,15 @@ def generate_grid_puzzle_interactive(
         if quality <= 0.6:
             continue
 
+        raw_cells = result.get("cells", {})
+        popularity_scores = idx.get("popularity_scores") or {}
+        cells, popularity_scores_subset = _enrich_cells_with_popularity(raw_cells, popularity_scores)
+
         puzzle = {
             "rows": [{"id": t["id"], "label": t["label"]} for t in row_triple],
             "cols": [{"id": t["id"], "label": t["label"]} for t in col_triple],
-            "cells": result.get("cells", {}),
+            "cells": cells,
+            "popularity_scores": popularity_scores_subset,
             "difficulty": difficulty,
             "quality_score": quality,
             "min_cell_count": result.get("min_cell_count"),

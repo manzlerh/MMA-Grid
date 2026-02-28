@@ -19,7 +19,7 @@ function initials(name) {
   return (name[0] || '?').toUpperCase()
 }
 
-function FilledCell({ fighter, locked, canInteract, onClick, isShaking }) {
+function FilledCell({ fighter, locked, canInteract, onClick, isShaking, missed = false }) {
   const [imageFailed, setImageFailed] = useState(false)
   const rawUrl = fighter?.image_url
   const sanitizedUrl =
@@ -32,6 +32,12 @@ function FilledCell({ fighter, locked, canInteract, onClick, isShaking }) {
     ? { animate: 'shake', variants: shakeVariants, className: 'aspect-square' }
     : {}
 
+  const borderClass = missed
+    ? 'border-2 border-red-500 ring-1 ring-red-400'
+    : locked
+      ? 'border border-green-500'
+      : 'border border-ufc-red'
+
   const content = (
     <button
       type="button"
@@ -39,9 +45,7 @@ function FilledCell({ fighter, locked, canInteract, onClick, isShaking }) {
       title={fighter?.name ?? ''}
       className={`w-full aspect-square flex flex-col items-center justify-end text-center p-1 transition-colors text-xs md:text-sm overflow-hidden relative
         ${showHeadshot ? 'bg-ufc-card' : ''}
-        ${locked
-          ? 'border border-green-500'
-          : 'border border-ufc-red'}
+        ${borderClass}
       `}
     >
       {showHeadshot ? (
@@ -73,13 +77,19 @@ function FilledCell({ fighter, locked, canInteract, onClick, isShaking }) {
             className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"
             aria-hidden
           />
-          <span className="relative z-10 text-white font-semibold break-words leading-tight w-full">
-            {fighter?.name ?? ''}
+          <span className="relative z-10 text-white font-semibold break-words leading-tight w-full flex flex-col items-center">
+            <span className="w-full">{fighter?.name ?? ''}</span>
+            {fighter?.cellScore != null && (
+              <span className="text-ufc-gold text-xs font-normal tabular-nums mt-0.5">{fighter.cellScore}</span>
+            )}
           </span>
         </>
       ) : (
-        <span className={`w-full h-full flex items-center justify-center font-bold text-white ${locked ? 'bg-green-600' : 'bg-ufc-red/90'}`}>
+        <span className={`w-full h-full flex flex-col items-center justify-center font-bold text-white ${missed ? 'bg-red-900/80' : locked ? 'bg-green-600' : 'bg-ufc-red/90'}`}>
           {initials(fighter?.name)}
+          {fighter?.cellScore != null && (
+            <span className="text-white/90 text-xs font-normal mt-0.5 tabular-nums">{fighter.cellScore}</span>
+          )}
         </span>
       )}
     </button>
@@ -131,7 +141,11 @@ export default function GridBoard({ puzzle = {}, board = [], onCellClick, locked
           {[0, 1, 2].map((c) => {
             const fighter = getCell(r, c)
             const locked = isLocked(r, c)
+            const cellKey = `${r},${c}`
+            const cellMeta = puzzle?.cells?.[cellKey]
+            const bestFighter = gameOver && cellMeta?.best_fighter ? (typeof cellMeta.best_fighter === 'object' ? cellMeta.best_fighter : { name: cellMeta.best_fighter }) : null
             const isEmpty = !fighter
+            const showMissed = gameOver && isEmpty && bestFighter
             const isShaking = shakingCell?.row === r && shakingCell?.col === c
             const CellWrapper = isShaking ? motion.div : Fragment
             const wrapperProps = isShaking
@@ -146,6 +160,19 @@ export default function GridBoard({ puzzle = {}, board = [], onCellClick, locked
                   locked={locked}
                   canInteract={canInteract}
                   isShaking={isShaking}
+                />
+              )
+            }
+
+            if (showMissed) {
+              return (
+                <FilledCell
+                  key={`${r}-${c}`}
+                  fighter={{ name: bestFighter.name, image_url: bestFighter.image_url }}
+                  locked={false}
+                  canInteract={false}
+                  isShaking={false}
+                  missed
                 />
               )
             }
