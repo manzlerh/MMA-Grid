@@ -37,23 +37,39 @@ function countMaxInSameGroup(puzzle, fighterIds) {
   return max
 }
 
-export function useConnectionsGame(puzzle) {
-  const [fighters, setFighters] = useState(() => buildInitialFighters(puzzle ?? {}))
-  const [selectedIds, setSelectedIds] = useState(() => new Set())
-  const [solvedGroups, setSolvedGroups] = useState([])
-  const [mistakesLeft, setMistakesLeft] = useState(3)
-  const [gameOver, setGameOver] = useState(false)
-  const [gameWon, setGameWon] = useState(false)
+/**
+ * @param {object} puzzle - daily puzzle with groups[].fighters
+ * @param {{ initialState?: object }} [options] - initialState to restore (fighters, selectedIds array, solvedGroups, mistakesLeft, gameOver, gameWon)
+ */
+export function useConnectionsGame(puzzle, options = {}) {
+  const { initialState } = options
+  const [fighters, setFighters] = useState(() => {
+    if (initialState?.fighters && Array.isArray(initialState.fighters) && initialState.fighters.length > 0) {
+      return initialState.fighters
+    }
+    return buildInitialFighters(puzzle ?? {})
+  })
+  const [selectedIds, setSelectedIds] = useState(() => {
+    if (initialState?.selectedIds && Array.isArray(initialState.selectedIds)) {
+      return new Set(initialState.selectedIds)
+    }
+    return new Set()
+  })
+  const [solvedGroups, setSolvedGroups] = useState(() => (initialState?.solvedGroups && Array.isArray(initialState.solvedGroups) ? initialState.solvedGroups : []))
+  const [mistakesLeft, setMistakesLeft] = useState(() => initialState?.mistakesLeft ?? 3)
+  const [gameOver, setGameOver] = useState(() => !!initialState?.gameOver)
+  const [gameWon, setGameWon] = useState(() => !!initialState?.gameWon)
   const [lastGuessWrong, setLastGuessWrong] = useState(false)
   const [isOneAway, setIsOneAway] = useState(false)
 
-  // Set initial 16 fighters when puzzle first loads (only when current fighters empty)
+  // Set initial 16 fighters when puzzle first loads (only when current fighters empty — skip if we restored state)
   useEffect(() => {
+    if (initialState?.fighters?.length) return
     const groups = puzzle?.groups ?? []
     const all = groups.flatMap((g) => g.fighters ?? []).filter(Boolean)
     if (all.length !== 16) return
     setFighters((prev) => (prev.length === 0 ? fisherYatesShuffle(all) : prev))
-  }, [puzzle?.groups])
+  }, [puzzle?.groups, initialState?.fighters?.length])
 
   // Reset lastGuessWrong after 600ms
   useEffect(() => {

@@ -9,17 +9,27 @@ const emptyBoard = () => [
 
 /**
  * @param {object} puzzle - daily puzzle data
- * @param {{ puzzleDate?: string }} [options] - optional puzzleDate (YYYY-MM-DD) for preview validation
+ * @param {{ puzzleDate?: string, initialState?: object }} [options] - puzzleDate for validation; initialState to restore (board, lockedCells array, attemptsLeft, score, gameOver, gameWon)
  */
 export function useGridGame(puzzle, options = {}) {
-  const { puzzleDate } = options
-  const [board, setBoard] = useState(emptyBoard)
+  const { puzzleDate, initialState } = options
+  const [board, setBoard] = useState(() => {
+    if (initialState?.board && Array.isArray(initialState.board) && initialState.board.length === 3) {
+      return initialState.board.map((row) => (Array.isArray(row) ? row.map((c) => c ?? null) : [null, null, null]))
+    }
+    return emptyBoard()
+  })
   const [selectedCell, setSelectedCell] = useState(null)
-  const [lockedCells, setLockedCells] = useState(() => new Set())
-  const [attemptsLeft, setAttemptsLeft] = useState(3)
-  const [score, setScore] = useState(0)
-  const [gameOver, setGameOver] = useState(false)
-  const [gameWon, setGameWon] = useState(false)
+  const [lockedCells, setLockedCells] = useState(() => {
+    if (initialState?.lockedCells && Array.isArray(initialState.lockedCells)) {
+      return new Set(initialState.lockedCells)
+    }
+    return new Set()
+  })
+  const [attemptsLeft, setAttemptsLeft] = useState(() => initialState?.attemptsLeft ?? 3)
+  const [score, setScore] = useState(() => initialState?.score ?? 0)
+  const [gameOver, setGameOver] = useState(() => !!initialState?.gameOver)
+  const [gameWon, setGameWon] = useState(() => !!initialState?.gameWon)
   const [isValidating, setIsValidating] = useState(false)
   const [lastFailedCell, setLastFailedCell] = useState(null)
 

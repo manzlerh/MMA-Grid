@@ -5,6 +5,7 @@ import { useUser } from '../context'
 import { useConnectionsGame } from '../hooks'
 import { generateConnectionsShareText } from '../utils/shareText'
 import { getStoredResult, setStoredResult } from '../utils/storedResult'
+import { getGameState, setGameState, clearGameState } from '../utils/gameState'
 import { todayEST, getNextPuzzleCountdownEST } from '../utils/dailyPuzzleDate'
 import { Navbar, ResultModal, StatsModal } from '../components/shared'
 import { ConnectionsBoard, MistakeTracker, ConnectionsSkeleton } from '../components/connections'
@@ -62,6 +63,8 @@ export default function ConnectionsGame({ previewDate }) {
   const [storedResult, setStoredResultState] = useState(null)
   const [countdown, setCountdown] = useState('0:00:00')
   const effectiveDate = previewDate || todayEST()
+  const completedResult = getStoredResult('connections', effectiveDate)
+  const initialConnectionsState = (previewDate || completedResult) ? null : getGameState('connections', effectiveDate)
 
   const {
     fighters,
@@ -75,7 +78,7 @@ export default function ConnectionsGame({ previewDate }) {
     submitGuess,
     shuffleRemaining,
     deselectAll,
-  } = useConnectionsGame(puzzle ?? {})
+  } = useConnectionsGame(puzzle ?? {}, { initialState: initialConnectionsState })
 
   useEffect(() => {
     let cancelled = false
@@ -105,6 +108,19 @@ export default function ConnectionsGame({ previewDate }) {
       setResultModalOpen(true)
     }
   }, [puzzle, previewDate, effectiveDate, todayCompleted?.connections])
+
+  // Persist in-progress connections state so it survives tab switch / refresh
+  useEffect(() => {
+    if (previewDate || alreadyPlayed || gameWon || gameOver || !effectiveDate) return
+    setGameState('connections', effectiveDate, {
+      fighters,
+      selectedIds: [...selectedIds],
+      solvedGroups,
+      mistakesLeft,
+      gameOver,
+      gameWon,
+    })
+  }, [fighters, selectedIds, solvedGroups, mistakesLeft, gameOver, gameWon, previewDate, alreadyPlayed, effectiveDate])
 
   useEffect(() => {
     if (!alreadyPlayed) return
@@ -148,6 +164,7 @@ export default function ConnectionsGame({ previewDate }) {
       shareText: shareTextForStorage,
       completedAt: new Date().toISOString(),
     })
+    clearGameState('connections', puzzleDate)
     saveScore({
       anonymousUserId: userId,
       gameType: 'connections',

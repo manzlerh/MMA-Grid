@@ -4,6 +4,7 @@ import { useUser } from '../context'
 import { useGridGame } from '../hooks'
 import { generateGridShareText } from '../utils/shareText'
 import { getStoredResult, setStoredResult } from '../utils/storedResult'
+import { getGameState, setGameState, clearGameState } from '../utils/gameState'
 import { todayEST, getNextPuzzleCountdownEST } from '../utils/dailyPuzzleDate'
 import { Navbar, ResultModal, StatsModal } from '../components/shared'
 import { GridBoard, CellModal, GridSkeleton } from '../components/grid'
@@ -36,6 +37,8 @@ export default function GridGame({ previewDate }) {
   const [storedResult, setStoredResultState] = useState(null)
   const [countdown, setCountdown] = useState('0:00:00')
   const effectiveDate = previewDate || todayEST()
+  const completedResult = getStoredResult('grid', effectiveDate)
+  const initialGridState = (previewDate || completedResult) ? null : getGameState('grid', effectiveDate)
 
   const {
     board,
@@ -51,7 +54,10 @@ export default function GridGame({ previewDate }) {
     submitFighter,
     closeCell,
     usedFighterNames,
-  } = useGridGame(puzzle ?? {}, previewDate ? { puzzleDate: previewDate } : {})
+  } = useGridGame(puzzle ?? {}, {
+    puzzleDate: previewDate || effectiveDate,
+    initialState: initialGridState,
+  })
 
   useEffect(() => {
     let cancelled = false
@@ -84,6 +90,19 @@ export default function GridGame({ previewDate }) {
       setResultModalOpen(true)
     }
   }, [puzzle, previewDate, effectiveDate, todayCompleted?.grid])
+
+  // Persist in-progress grid state so it survives tab switch / refresh
+  useEffect(() => {
+    if (previewDate || alreadyPlayed || gameWon || gameOver || !effectiveDate) return
+    setGameState('grid', effectiveDate, {
+      board,
+      lockedCells: [...lockedCells],
+      attemptsLeft,
+      score,
+      gameOver,
+      gameWon,
+    })
+  }, [board, lockedCells, attemptsLeft, score, gameOver, gameWon, previewDate, alreadyPlayed, effectiveDate])
 
   useEffect(() => {
     if (!alreadyPlayed) return
@@ -128,6 +147,7 @@ export default function GridGame({ previewDate }) {
       completedAt: new Date().toISOString(),
       board: board.map((row) => row.map((c) => (c ? { name: c.name } : null))),
     })
+    clearGameState('grid', puzzleDate)
     saveScore({
       anonymousUserId: userId,
       gameType: 'grid',
