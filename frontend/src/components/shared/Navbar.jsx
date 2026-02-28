@@ -19,7 +19,7 @@ export default function Navbar() {
     <header className="bg-ufc-card border-b border-ufc-border">
       <nav className="max-w-6xl mx-auto px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <NavLink to="/" className="font-display text-2xl text-ufc-gold tracking-wide">
-          UFC TRIVIA
+          MMA TRIVIA
         </NavLink>
         <div className="flex items-center gap-2">
           <NavLink to="/grid" className={linkClass}>

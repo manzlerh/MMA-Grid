@@ -32,7 +32,7 @@ const GRID_WRONG = '🟥'
 export function generateGridShareText({ won, score, attempts, board, puzzleDate }) {
   const dateStr = formatPuzzleDate(puzzleDate)
   const lines = [
-    `UFC TRIVIA — GRID 📅 ${dateStr}`,
+    `MMA TRIVIA — GRID 📅 ${dateStr}`,
     '',
   ]
 
@@ -70,7 +70,7 @@ const CONNECTIONS_UNSOLVED_ROW = '⬛⬛⬛⬛'
 export function generateConnectionsShareText({ won, mistakes, solvedGroups, puzzleDate }) {
   const dateStr = formatPuzzleDate(puzzleDate)
   const lines = [
-    `UFC TRIVIA — CONNECTIONS 📅 ${dateStr}`,
+    `MMA TRIVIA — CONNECTIONS 📅 ${dateStr}`,
     '',
   ]
 

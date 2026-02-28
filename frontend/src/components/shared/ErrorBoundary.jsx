@@ -27,7 +27,7 @@ export default class ErrorBoundary extends Component {
     return (
       <div className="min-h-screen bg-ufc-dark text-ufc-text flex flex-col items-center justify-center px-4 py-12">
         <h1 className="font-display text-4xl sm:text-5xl text-ufc-gold tracking-wide text-center">
-          UFC TRIVIA
+          MMA TRIVIA
         </h1>
         <p className="text-ufc-muted mt-6 text-center max-w-sm">
           Something went wrong — we&apos;re looking into it.

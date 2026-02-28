@@ -13,9 +13,9 @@ export default function Home() {
       <main className="max-w-4xl mx-auto px-4 py-12">
         <section className="text-center mb-12">
           <h1 className="font-display text-5xl sm:text-6xl text-ufc-gold tracking-wide">
-            UFC TRIVIA
+            MMA TRIVIA
           </h1>
-          <p className="text-ufc-muted mt-3 text-lg">Daily UFC knowledge challenges</p>
+          <p className="text-ufc-muted mt-3 text-lg">Daily MMA knowledge challenges</p>
         </section>
 
         <section className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-12">
