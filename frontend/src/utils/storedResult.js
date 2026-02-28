@@ -29,3 +29,16 @@ export function setStoredResult(gameType, date, payload) {
     localStorage.setItem(key, JSON.stringify(payload))
   } catch (_) {}
 }
+
+/**
+ * Remove stored result for a game/date (e.g. dev reset).
+ * @param {'grid' | 'connections'} gameType
+ * @param {string} date YYYY-MM-DD
+ */
+export function clearStoredResult(gameType, date) {
+  if (!date || !gameType) return
+  try {
+    const key = `${RESULT_KEY_PREFIX}${gameType}_${date}`
+    localStorage.removeItem(key)
+  } catch (_) {}
+}

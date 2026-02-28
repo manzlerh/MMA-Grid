@@ -3,7 +3,7 @@ import { getDailyPuzzle, getDailyLeaderboard } from '../services/api'
 import { useUser } from '../context'
 import { useGridGame } from '../hooks'
 import { generateGridShareText } from '../utils/shareText'
-import { getStoredResult, setStoredResult } from '../utils/storedResult'
+import { getStoredResult, setStoredResult, clearStoredResult } from '../utils/storedResult'
 import { getGameState, setGameState, clearGameState } from '../utils/gameState'
 import { todayEST, getNextPuzzleCountdownEST } from '../utils/dailyPuzzleDate'
 import { isDev, dayBefore, dayAfter, formatDateForDisplay } from '../utils/devUtils'
@@ -67,11 +67,16 @@ export default function GridGame({ previewDate }) {
 
   useEffect(() => {
     if (previewDate || !puzzle) return
-    const completed = todayCompleted?.grid || getStoredResult('grid', effectiveDate)
+    const completedForThisDate = getStoredResult('grid', effectiveDate)
+    const completedToday = effectiveDate === todayEST() && todayCompleted?.grid
+    const completed = isDev ? !!completedForThisDate : (completedToday || completedForThisDate)
     if (completed) {
       setAlreadyPlayed(true)
       setStoredResultState(getStoredResult('grid', effectiveDate))
       setResultModalOpen(true)
+    } else {
+      setAlreadyPlayed(false)
+      setStoredResultState(null)
     }
   }, [puzzle, previewDate, effectiveDate, todayCompleted?.grid])
 
@@ -191,7 +196,7 @@ export default function GridGame({ previewDate }) {
               {isDev && (
                 <button
                   type="button"
-                  onClick={() => { clearGameState('grid', effectiveDate); setResetKey((k) => k + 1) }}
+                  onClick={() => { clearGameState('grid', effectiveDate); clearStoredResult('grid', effectiveDate); setAlreadyPlayed(false); setStoredResultState(null); setResetKey((k) => k + 1) }}
                   className="p-1 rounded hover:bg-ufc-card text-ufc-muted hover:text-ufc-text"
                   aria-label="Reset puzzle"
                   title="Reset puzzle (dev)"
@@ -286,6 +291,9 @@ export default function GridGame({ previewDate }) {
                 type="button"
                 onClick={() => {
                   clearGameState('grid', effectiveDate)
+                  clearStoredResult('grid', effectiveDate)
+                  setAlreadyPlayed(false)
+                  setStoredResultState(null)
                   setResetKey((k) => k + 1)
                 }}
                 className="p-1 rounded hover:bg-ufc-card text-ufc-muted hover:text-ufc-text"

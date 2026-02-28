@@ -4,7 +4,7 @@ import { getDailyPuzzle, getDailyLeaderboard } from '../services/api'
 import { useUser } from '../context'
 import { useConnectionsGame } from '../hooks'
 import { generateConnectionsShareText } from '../utils/shareText'
-import { getStoredResult, setStoredResult } from '../utils/storedResult'
+import { getStoredResult, setStoredResult, clearStoredResult } from '../utils/storedResult'
 import { getGameState, setGameState, clearGameState } from '../utils/gameState'
 import { todayEST, getNextPuzzleCountdownEST } from '../utils/dailyPuzzleDate'
 import { isDev, dayBefore, dayAfter, formatDateForDisplay } from '../utils/devUtils'
@@ -91,11 +91,16 @@ export default function ConnectionsGame({ previewDate }) {
 
   useEffect(() => {
     if (previewDate || !puzzle?.groups?.length) return
-    const completed = todayCompleted?.connections || getStoredResult('connections', effectiveDate)
+    const completedForThisDate = getStoredResult('connections', effectiveDate)
+    const completedToday = effectiveDate === todayEST() && todayCompleted?.connections
+    const completed = isDev ? !!completedForThisDate : (completedToday || completedForThisDate)
     if (completed) {
       setAlreadyPlayed(true)
       setStoredResultState(getStoredResult('connections', effectiveDate))
       setResultModalOpen(true)
+    } else {
+      setAlreadyPlayed(false)
+      setStoredResultState(null)
     }
   }, [puzzle, previewDate, effectiveDate, todayCompleted?.connections])
 
@@ -212,7 +217,7 @@ export default function ConnectionsGame({ previewDate }) {
               {isDev && (
                 <button
                   type="button"
-                  onClick={() => { clearGameState('connections', effectiveDate); setResetKey((k) => k + 1) }}
+                  onClick={() => { clearGameState('connections', effectiveDate); clearStoredResult('connections', effectiveDate); setAlreadyPlayed(false); setStoredResultState(null); setResetKey((k) => k + 1) }}
                   className="p-1 rounded hover:bg-ufc-card text-ufc-muted hover:text-ufc-text"
                   aria-label="Reset puzzle"
                   title="Reset puzzle (dev)"
@@ -306,6 +311,9 @@ export default function ConnectionsGame({ previewDate }) {
                 type="button"
                 onClick={() => {
                   clearGameState('connections', effectiveDate)
+                  clearStoredResult('connections', effectiveDate)
+                  setAlreadyPlayed(false)
+                  setStoredResultState(null)
                   setResetKey((k) => k + 1)
                 }}
                 className="p-1 rounded hover:bg-ufc-card text-ufc-muted hover:text-ufc-text"
