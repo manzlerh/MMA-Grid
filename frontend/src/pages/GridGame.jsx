@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { getDailyPuzzle, getDailyLeaderboard } from '../services/api'
 import { useUser } from '../context'
 import { useGridGame } from '../hooks'
@@ -6,6 +6,7 @@ import { generateGridShareText } from '../utils/shareText'
 import { getStoredResult, setStoredResult } from '../utils/storedResult'
 import { getGameState, setGameState, clearGameState } from '../utils/gameState'
 import { todayEST, getNextPuzzleCountdownEST } from '../utils/dailyPuzzleDate'
+import { isDev, dayBefore, dayAfter, formatDateForDisplay } from '../utils/devUtils'
 import { Navbar, ResultModal, StatsModal } from '../components/shared'
 import { GridBoard, CellModal, GridSkeleton } from '../components/grid'
 import { MistakeTracker } from '../components/connections'
@@ -36,35 +37,18 @@ export default function GridGame({ previewDate }) {
   const [alreadyPlayed, setAlreadyPlayed] = useState(false)
   const [storedResult, setStoredResultState] = useState(null)
   const [countdown, setCountdown] = useState('0:00:00')
-  const effectiveDate = previewDate || todayEST()
+  const [completionResult, setCompletionResult] = useState(null)
+  const [devDateOverride, setDevDateOverride] = useState(null)
+  const [resetKey, setResetKey] = useState(0)
+  const effectiveDate = devDateOverride ?? previewDate ?? todayEST()
   const completedResult = getStoredResult('grid', effectiveDate)
-  const initialGridState = (previewDate || completedResult) ? null : getGameState('grid', effectiveDate)
-
-  const {
-    board,
-    selectedCell,
-    lockedCells,
-    attemptsLeft,
-    score,
-    gameOver,
-    gameWon,
-    isValidating,
-    lastFailedCell,
-    selectCell,
-    submitFighter,
-    closeCell,
-    usedFighterNames,
-  } = useGridGame(puzzle ?? {}, {
-    puzzleDate: previewDate || effectiveDate,
-    initialState: initialGridState,
-  })
 
   useEffect(() => {
     let cancelled = false
-    getDailyPuzzle('grid', previewDate ? { date: previewDate } : {})
+    const opts = (isDev && devDateOverride) || previewDate ? { date: effectiveDate } : {}
+    getDailyPuzzle('grid', opts)
       .then((data) => {
         if (cancelled) return
-        // Backend returns { gameType, puzzle, difficulty, puzzleDate }; puzzle is null when none for that date
         const p = data?.puzzle ?? data
         setPuzzle(p != null ? p : null)
         if (p) gameStartTime.current = Date.now()
@@ -79,7 +63,7 @@ export default function GridGame({ previewDate }) {
         if (!cancelled) setLoading(false)
       })
     return () => { cancelled = true }
-  }, [previewDate])
+  }, [effectiveDate, previewDate])
 
   useEffect(() => {
     if (previewDate || !puzzle) return
@@ -90,19 +74,6 @@ export default function GridGame({ previewDate }) {
       setResultModalOpen(true)
     }
   }, [puzzle, previewDate, effectiveDate, todayCompleted?.grid])
-
-  // Persist in-progress grid state so it survives tab switch / refresh
-  useEffect(() => {
-    if (previewDate || alreadyPlayed || gameWon || gameOver || !effectiveDate) return
-    setGameState('grid', effectiveDate, {
-      board,
-      lockedCells: [...lockedCells],
-      attemptsLeft,
-      score,
-      gameOver,
-      gameWon,
-    })
-  }, [board, lockedCells, attemptsLeft, score, gameOver, gameWon, previewDate, alreadyPlayed, effectiveDate])
 
   useEffect(() => {
     if (!alreadyPlayed) return
@@ -120,67 +91,51 @@ export default function GridGame({ previewDate }) {
     }
   }, [alreadyPlayed, effectiveDate])
 
-  useEffect(() => {
-    if (previewDate) return // no score submission in preview
-    if (!(gameWon || gameOver) || completionHandled.current || !userId) return
-    completionHandled.current = true
-    markGameCompleted('grid')
-    const puzzleDate = todayEST()
-    const timeSeconds =
-      gameStartTime.current != null
-        ? Math.floor((Date.now() - gameStartTime.current) / 1000)
-        : undefined
-    setFinalTimeSeconds(timeSeconds ?? null)
-    const attempts = 3 - attemptsLeft
-    const shareTextForStorage = generateGridShareText({
-      won: gameWon,
-      score,
-      attempts,
-      board,
-      puzzleDate: effectiveDate,
-    })
-    setStoredResult('grid', puzzleDate, {
-      score,
-      attempts,
-      won: gameWon,
-      shareText: shareTextForStorage,
-      completedAt: new Date().toISOString(),
-      board: board.map((row) => row.map((c) => (c ? { name: c.name } : null))),
-    })
-    clearGameState('grid', puzzleDate)
-    saveScore({
-      anonymousUserId: userId,
-      gameType: 'grid',
-      puzzleDate,
-      score,
-      completed: gameWon,
-      attempts,
-      timeSeconds,
-    })
-      .then(() => getDailyLeaderboard('grid', puzzleDate))
-      .then((data) => setDailyStats(data ?? null))
-      .catch(() => {})
-  }, [gameWon, gameOver, userId, score, attemptsLeft, markGameCompleted, saveScore, previewDate, board, effectiveDate])
-
-  const puzzleColumns = puzzle?.columns ?? ['', '', '']
-  const puzzleRows = puzzle?.rows ?? ['', '', '']
-  const rowLabel = selectedCell != null ? puzzleRows[selectedCell.row] : ''
-  const colLabel = selectedCell != null ? puzzleColumns[selectedCell.col] : ''
-  const showResultModal = gameWon || gameOver
-  useEffect(() => {
-    if (showResultModal) setResultModalOpen(true)
-  }, [showResultModal])
-
-  const shareText =
-    showResultModal
-      ? generateGridShareText({
-          won: gameWon,
-          score,
-          attempts: 3 - attemptsLeft,
-          board,
-          puzzleDate: effectiveDate,
-        })
-      : ''
+  const handleComplete = useCallback(
+    (result) => {
+      if (completionHandled.current || !userId) return
+      completionHandled.current = true
+      markGameCompleted('grid')
+      const puzzleDate = todayEST()
+      const timeSeconds =
+        gameStartTime.current != null
+          ? Math.floor((Date.now() - gameStartTime.current) / 1000)
+          : undefined
+      setFinalTimeSeconds(timeSeconds ?? null)
+      const attempts = 3 - result.attemptsLeft
+      const shareTextForStorage = generateGridShareText({
+        won: result.gameWon,
+        score: result.score,
+        attempts,
+        board: result.board,
+        puzzleDate: effectiveDate,
+      })
+      setStoredResult('grid', puzzleDate, {
+        score: result.score,
+        attempts,
+        won: result.gameWon,
+        shareText: shareTextForStorage,
+        completedAt: new Date().toISOString(),
+        board: result.board.map((row) => row.map((c) => (c ? { name: c.name } : null))),
+      })
+      clearGameState('grid', puzzleDate)
+      saveScore({
+        anonymousUserId: userId,
+        gameType: 'grid',
+        puzzleDate,
+        score: result.score,
+        completed: result.gameWon,
+        attempts,
+        timeSeconds,
+      })
+        .then(() => getDailyLeaderboard('grid', puzzleDate))
+        .then((data) => setDailyStats(data ?? null))
+        .catch(() => {})
+      setCompletionResult(result)
+      setResultModalOpen(true)
+    },
+    [userId, markGameCompleted, saveScore, effectiveDate]
+  )
 
   if (loading) {
     return (
@@ -202,21 +157,78 @@ export default function GridGame({ previewDate }) {
   }
 
   if (puzzle === null) {
+    const noPuzzleDateLabel = (devDateOverride || previewDate) ? formatDateForDisplay(effectiveDate) : todayFormatted()
     return (
       <div className="min-h-screen bg-ufc-dark text-ufc-text">
         <Navbar />
-        <main className="max-w-2xl mx-auto px-4 py-6 flex flex-col items-center justify-center min-h-[60vh]">
-          <h1 className="font-display text-2xl text-ufc-gold tracking-wide">DAILY GRID</h1>
-          <p className="text-ufc-muted mt-2">
-            {loadError ? 'Failed to load the puzzle. Check your connection and try again.' : 'No puzzle for today. Check back later or try another date.'}
-          </p>
+        <main className="max-w-2xl mx-auto px-4 py-6">
+          <header className="text-center mb-6">
+            <p className="text-ufc-muted text-sm flex items-center justify-center gap-2">
+              {isDev && (
+                <button
+                  type="button"
+                  onClick={() => setDevDateOverride(dayBefore(effectiveDate))}
+                  className="p-0.5 rounded hover:bg-ufc-card text-ufc-muted hover:text-ufc-text"
+                  aria-label="Previous day"
+                >
+                  ←
+                </button>
+              )}
+              {noPuzzleDateLabel}
+              {isDev && (
+                <button
+                  type="button"
+                  onClick={() => setDevDateOverride(dayAfter(effectiveDate))}
+                  className="p-0.5 rounded hover:bg-ufc-card text-ufc-muted hover:text-ufc-text"
+                  aria-label="Next day"
+                >
+                  →
+                </button>
+              )}
+            </p>
+            <h1 className="font-display text-3xl text-ufc-gold tracking-wide mt-1 flex items-center justify-center gap-2">
+              DAILY GRID
+              {isDev && (
+                <button
+                  type="button"
+                  onClick={() => { clearGameState('grid', effectiveDate); setResetKey((k) => k + 1) }}
+                  className="p-1 rounded hover:bg-ufc-card text-ufc-muted hover:text-ufc-text"
+                  aria-label="Reset puzzle"
+                  title="Reset puzzle (dev)"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                    <path d="M3 3v5h5" />
+                  </svg>
+                </button>
+              )}
+            </h1>
+          </header>
+          <div className="flex flex-col items-center justify-center min-h-[40vh] text-center">
+            <p className="text-ufc-muted mt-2">
+              {loadError ? 'Failed to load the puzzle. Check your connection and try again.' : 'No puzzle for this date. Check back later or try another date.'}
+            </p>
+          </div>
         </main>
       </div>
     )
   }
 
-  const displayBoard = alreadyPlayed && storedResult?.board ? storedResult.board : board
-  const resultForModal = alreadyPlayed ? storedResult : null
+  const dateLabel = (devDateOverride || previewDate) ? formatDateForDisplay(effectiveDate) : todayFormatted()
+  const resultForModal = alreadyPlayed ? storedResult : (completionResult
+    ? {
+        won: completionResult.gameWon,
+        score: completionResult.score,
+        attempts: 3 - completionResult.attemptsLeft,
+        shareText: generateGridShareText({
+          won: completionResult.gameWon,
+          score: completionResult.score,
+          attempts: 3 - completionResult.attemptsLeft,
+          board: completionResult.board,
+          puzzleDate: effectiveDate,
+        }),
+      }
+    : null)
 
   return (
     <div className="min-h-screen bg-ufc-dark text-ufc-text">
@@ -244,32 +256,69 @@ export default function GridGame({ previewDate }) {
         )}
 
         <header className="text-center mb-6">
-          <p className="text-ufc-muted text-sm">{previewDate ? effectiveDate : todayFormatted()}</p>
-          <h1 className="font-display text-3xl text-ufc-gold tracking-wide mt-1">DAILY GRID</h1>
-          {!alreadyPlayed && (
-            <div className="mt-3">
-              <MistakeTracker mistakesLeft={attemptsLeft} maxMistakes={3} />
-            </div>
-          )}
+          <p className="text-ufc-muted text-sm flex items-center justify-center gap-2">
+            {isDev && (
+              <button
+                type="button"
+                onClick={() => setDevDateOverride(dayBefore(effectiveDate))}
+                className="p-0.5 rounded hover:bg-ufc-card text-ufc-muted hover:text-ufc-text"
+                aria-label="Previous day"
+              >
+                ←
+              </button>
+            )}
+            {dateLabel}
+            {isDev && (
+              <button
+                type="button"
+                onClick={() => setDevDateOverride(dayAfter(effectiveDate))}
+                className="p-0.5 rounded hover:bg-ufc-card text-ufc-muted hover:text-ufc-text"
+                aria-label="Next day"
+              >
+                →
+              </button>
+            )}
+          </p>
+          <h1 className="font-display text-3xl text-ufc-gold tracking-wide mt-1 flex items-center justify-center gap-2">
+            DAILY GRID
+            {isDev && (
+              <button
+                type="button"
+                onClick={() => {
+                  clearGameState('grid', effectiveDate)
+                  setResetKey((k) => k + 1)
+                }}
+                className="p-1 rounded hover:bg-ufc-card text-ufc-muted hover:text-ufc-text"
+                aria-label="Reset puzzle"
+                title="Reset puzzle (dev)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                  <path d="M3 3v5h5" />
+                </svg>
+              </button>
+            )}
+          </h1>
         </header>
 
-        <GridBoard
-          puzzle={puzzle ?? {}}
-          board={displayBoard}
-          onCellClick={alreadyPlayed || gameOver ? () => {} : selectCell}
-          lockedCells={alreadyPlayed ? ALL_GRID_CELLS : lockedCells}
-          shakingCell={alreadyPlayed ? null : lastFailedCell}
-          gameOver={gameOver}
-        />
-
-        {!alreadyPlayed && (
-          <CellModal
-            isOpen={selectedCell != null}
-            onClose={closeCell}
-            rowLabel={rowLabel}
-            colLabel={colLabel}
-            onFighterSelect={submitFighter}
-            excludeNames={usedFighterNames}
+        {!alreadyPlayed ? (
+          <GridGamePlay
+            key={`grid-${effectiveDate}-${resetKey}`}
+            puzzle={puzzle}
+            effectiveDate={effectiveDate}
+            previewDate={previewDate}
+            completedResult={completedResult}
+            storedResult={storedResult}
+            onComplete={handleComplete}
+          />
+        ) : (
+          <GridBoard
+            puzzle={puzzle ?? {}}
+            board={storedResult?.board ?? [[null, null, null], [null, null, null], [null, null, null]]}
+            onCellClick={() => {}}
+            lockedCells={ALL_GRID_CELLS}
+            shakingCell={null}
+            gameOver
           />
         )}
 
@@ -277,12 +326,12 @@ export default function GridGame({ previewDate }) {
           isOpen={resultModalOpen}
           onClose={() => setResultModalOpen(false)}
           gameType="grid"
-          won={resultForModal?.won ?? gameWon}
-          score={resultForModal?.score ?? score}
-          attempts={resultForModal?.attempts ?? 3 - attemptsLeft}
+          won={resultForModal?.won ?? false}
+          score={resultForModal?.score ?? 0}
+          attempts={resultForModal?.attempts ?? 0}
           timeSeconds={resultForModal ? undefined : (finalTimeSeconds ?? undefined)}
           dailyStats={dailyStats}
-          shareText={resultForModal?.shareText ?? shareText}
+          shareText={resultForModal?.shareText ?? ''}
           onViewStats={() => {
             setResultModalOpen(false)
             setStatsModalOpen(true)
@@ -291,5 +340,81 @@ export default function GridGame({ previewDate }) {
         <StatsModal isOpen={statsModalOpen} onClose={() => setStatsModalOpen(false)} />
       </main>
     </div>
+  )
+}
+
+function GridGamePlay({
+  puzzle,
+  effectiveDate,
+  previewDate,
+  completedResult,
+  storedResult,
+  onComplete,
+}) {
+  const initialGridState = (previewDate || completedResult) ? null : getGameState('grid', effectiveDate)
+  const completionFired = useRef(false)
+  const {
+    board,
+    selectedCell,
+    lockedCells,
+    attemptsLeft,
+    score,
+    gameOver,
+    gameWon,
+    lastFailedCell,
+    selectCell,
+    submitFighter,
+    closeCell,
+    usedFighterNames,
+  } = useGridGame(puzzle ?? {}, {
+    puzzleDate: previewDate || effectiveDate,
+    initialState: initialGridState,
+  })
+
+  useEffect(() => {
+    if (previewDate || gameWon || gameOver || !effectiveDate) return
+    setGameState('grid', effectiveDate, {
+      board,
+      lockedCells: [...lockedCells],
+      attemptsLeft,
+      score,
+      gameOver,
+      gameWon,
+    })
+  }, [board, lockedCells, attemptsLeft, score, gameOver, gameWon, previewDate, effectiveDate])
+
+  useEffect(() => {
+    if (!(gameWon || gameOver) || completionFired.current) return
+    completionFired.current = true
+    onComplete({ gameWon, gameOver, board, score, attemptsLeft })
+  }, [gameWon, gameOver, board, score, attemptsLeft, onComplete])
+
+  const puzzleColumns = puzzle?.columns ?? ['', '', '']
+  const puzzleRows = puzzle?.rows ?? ['', '', '']
+  const rowLabel = selectedCell != null ? puzzleRows[selectedCell.row] : ''
+  const colLabel = selectedCell != null ? puzzleColumns[selectedCell.col] : ''
+
+  return (
+    <>
+      <div className="mt-3 flex justify-center mb-4">
+        <MistakeTracker mistakesLeft={attemptsLeft} maxMistakes={3} />
+      </div>
+      <GridBoard
+        puzzle={puzzle ?? {}}
+        board={board}
+        onCellClick={gameOver ? () => {} : selectCell}
+        lockedCells={lockedCells}
+        shakingCell={lastFailedCell}
+        gameOver={gameOver}
+      />
+      <CellModal
+        isOpen={selectedCell != null}
+        onClose={closeCell}
+        rowLabel={rowLabel}
+        colLabel={colLabel}
+        onFighterSelect={submitFighter}
+        excludeNames={usedFighterNames}
+      />
+    </>
   )
 }
