@@ -84,23 +84,24 @@ router.get('/', (req, res, next) => {
 
   pool.query(sql, [gameType, puzzleDate])
     .then((result) => {
-      const row = result.rows[0];
-      if (!row) {
-        return res.status(404).json({
-          error: 'No puzzle today',
-          message: 'Check back tomorrow',
-        });
-      }
+      try {
+        const row = result.rows[0];
+        if (!row) {
+          return res.status(404).json({
+            error: 'No puzzle today',
+            message: 'Check back tomorrow',
+          });
+        }
 
-      const puzzleData = parsePuzzleData(row.puzzle_data);
-      if (!puzzleData) {
-        return res.status(404).json({
-          error: 'No puzzle today',
-          message: 'Check back tomorrow',
-        });
-      }
+        const puzzleData = parsePuzzleData(row.puzzle_data);
+        if (!puzzleData) {
+          return res.status(404).json({
+            error: 'No puzzle today',
+            message: 'Check back tomorrow',
+          });
+        }
 
-      let puzzle;
+        let puzzle;
       if (gameType === 'grid') {
         // Strip valid_fighters; send count, min_popularity, best_fighter (for scoring and game-over reveal)
         const cells = puzzleData.cells || {};
@@ -109,7 +110,8 @@ router.get('/', (req, res, next) => {
         for (const [key, val] of Object.entries(cells)) {
           const list = Array.isArray(val) ? val : (val && val.valid_fighters) || [];
           const minPop = typeof val === 'object' && val != null && 'min_popularity' in val ? val.min_popularity : 0.15;
-          const bestName = typeof val === 'object' && val != null && val.best_fighter ? val.best_fighter : null;
+          const bestRaw = typeof val === 'object' && val != null && val.best_fighter ? val.best_fighter : null;
+          const bestName = typeof bestRaw === 'string' ? bestRaw : (bestRaw && typeof bestRaw === 'object' && bestRaw.name ? bestRaw.name : null);
           strippedCells[key] = { count: list.length, min_popularity: minPop, best_fighter: bestName ? { name: bestName } : null };
           if (bestName) bestFighterNames.push(bestName);
         }
@@ -135,7 +137,10 @@ router.get('/', (req, res, next) => {
               res.set('Cache-Control', 'public, max-age=3600');
               res.json({ gameType, puzzle, difficulty: row.difficulty, puzzleDate });
             })
-            .catch((err) => next(err));
+            .catch((err) => {
+              console.error('[daily GET grid image query]', err.message || err);
+              next(err);
+            });
         }
         puzzle = {
           rows: Array.isArray(puzzleData.rows) ? puzzleData.rows : [],
@@ -180,7 +185,10 @@ router.get('/', (req, res, next) => {
               res.set('Cache-Control', 'public, max-age=3600');
               res.json({ gameType, puzzle, difficulty: row.difficulty, puzzleDate });
             })
-            .catch((err) => next(err));
+            .catch((err) => {
+              console.error('[daily GET connections image query]', err.message || err);
+              next(err);
+            });
         }
         if (puzzle.all_fighters.length > 0) {
           for (let i = puzzle.all_fighters.length - 1; i > 0; i--) {
@@ -198,8 +206,17 @@ router.get('/', (req, res, next) => {
         difficulty: row.difficulty,
         puzzleDate,
       });
+      } catch (err) {
+        console.error('[daily GET]', err.message || err);
+        if (err.stack) console.error(err.stack);
+        next(err);
+      }
     })
-    .catch((err) => next(err));
+    .catch((err) => {
+      console.error('[daily GET query]', err.message || err);
+      if (err.stack) console.error(err.stack);
+      next(err);
+    });
 });
 
 module.exports = router;

@@ -148,6 +148,8 @@ router.post('/', async (req, res) => {
 
     return res.status(201).json({ success: true, streak, scoreId });
   } catch (err) {
+    console.error('[scores POST]', err.message || err);
+    if (err.stack) console.error(err.stack);
     return res.status(500).json({ error: 'Failed to save score' });
   }
 });
@@ -316,6 +318,8 @@ router.get('/daily/:gameType/:puzzleDate', async (req, res) => {
       avgAttempts,
     });
   } catch (err) {
+    console.error('[scores GET /daily/:gameType/:date]', err.message || err);
+    if (err.stack) console.error(err.stack);
     return res.status(500).json({ error: 'Failed to load daily stats' });
   }
 });
@@ -347,6 +351,8 @@ router.get('/', async (req, res) => {
     const result = await pool.query(sql, params);
     return res.json({ scores: result.rows });
   } catch (err) {
+    console.error('[scores GET /]', err.message || err);
+    if (err.stack) console.error(err.stack);
     return res.status(500).json({ error: 'Failed to load scores' });
   }
 });
