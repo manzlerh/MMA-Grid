@@ -17,8 +17,27 @@ const scoresRouter = require('./routes/scores');
 const app = express();
 app.set('pool', pool);
 
-const corsOrigin = process.env.CORS_ORIGIN || (nodeEnv === 'development' ? 'http://localhost:5173' : undefined);
-app.use(cors(corsOrigin != null ? { origin: corsOrigin } : { origin: false }));
+// CORS: comma-separated list; if CORS_ORIGIN_VERCEL_PREVIEWS=true, also allow *.vercel.app preview URLs for same project
+const corsOriginRaw = process.env.CORS_ORIGIN || (nodeEnv === 'development' ? 'http://localhost:5173' : '');
+const allowedOrigins = corsOriginRaw.split(',').map((o) => o.trim()).filter(Boolean);
+const allowVercelPreviews = process.env.CORS_ORIGIN_VERCEL_PREVIEWS === 'true';
+
+function corsOrigin(origin, callback) {
+  if (!origin) return callback(null, true); // same-origin or non-browser
+  if (allowedOrigins.includes(origin)) return callback(null, true);
+  if (allowVercelPreviews && allowedOrigins.length > 0) {
+    const prod = allowedOrigins.find((o) => o.includes('.vercel.app'));
+    if (prod) {
+      const base = prod.replace(/^https:\/\//, '').replace(/\.vercel\.app$/, '');
+      if (base && new RegExp(`^https://${base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}-.+\\.vercel\\.app$`).test(origin)) {
+        return callback(null, true);
+      }
+    }
+  }
+  callback(null, false);
+}
+
+app.use(cors(allowedOrigins.length > 0 || allowVercelPreviews ? { origin: corsOrigin } : { origin: false }));
 app.use(express.json());
 
 app.get('/api', (req, res) => res.json({ ok: true, message: 'UFC trivia API' }));
