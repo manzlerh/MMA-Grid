@@ -49,7 +49,9 @@ function todayFormatted() {
   })
 }
 
-
+/**
+ * @param {{ previewDate?: string }} props
+ */
 export default function ConnectionsGame({ previewDate }) {
   const { userId, todayCompleted, markGameCompleted, saveScore } = useUser()
   const [puzzle, setPuzzle] = useState(null)

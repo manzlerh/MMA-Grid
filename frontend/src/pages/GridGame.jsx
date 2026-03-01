@@ -22,7 +22,9 @@ function todayFormatted() {
   })
 }
 
-
+/**
+ * @param {{ previewDate?: string }} props
+ */
 export default function GridGame({ previewDate }) {
   const { userId, todayCompleted, markGameCompleted, saveScore } = useUser()
   const [puzzle, setPuzzle] = useState(null)
