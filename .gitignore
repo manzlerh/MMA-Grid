@@ -1,6 +1,8 @@
 # Environment and secrets
 .env
 .env.*
+.env.development
+.env.production
 !.env.example
 
 # Python

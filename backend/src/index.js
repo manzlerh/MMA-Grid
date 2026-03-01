@@ -1,4 +1,6 @@
 const path = require('path');
+const nodeEnv = process.env.NODE_ENV || 'development';
+require('dotenv').config({ path: path.join(__dirname, '..', `.env.${nodeEnv}`) });
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 const express = require('express');
@@ -15,7 +17,8 @@ const scoresRouter = require('./routes/scores');
 const app = express();
 app.set('pool', pool);
 
-app.use(cors());
+const corsOrigin = process.env.CORS_ORIGIN || (nodeEnv === 'development' ? 'http://localhost:5173' : undefined);
+app.use(cors(corsOrigin != null ? { origin: corsOrigin } : { origin: false }));
 app.use(express.json());
 
 app.get('/api', (req, res) => res.json({ ok: true, message: 'UFC trivia API' }));

@@ -4,11 +4,12 @@ const router = express.Router();
 
 const CONNECTIONS_COLORS = ['yellow', 'green', 'blue', 'purple'];
 
-// Max 30 validation requests per minute per IP
+const windowMs = parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 60000;
+const max = parseInt(process.env.RATE_LIMIT_MAX, 10) || 30;
 const validateLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 30,
-  message: { error: 'Too many requests', retryAfter: 60 },
+  windowMs,
+  max,
+  message: { error: 'Too many requests', retryAfter: Math.ceil(windowMs / 1000) },
   standardHeaders: true,
 });
 
