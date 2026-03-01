@@ -1,6 +1,9 @@
 const dns = require('dns');
 const { Pool } = require('pg');
 
+// Force IPv4 resolution
+dns.setDefaultResultOrder('ipv4first');
+
 const connectionString = process.env.DATABASE_URL;
 const isProduction = process.env.NODE_ENV === 'production';
 
