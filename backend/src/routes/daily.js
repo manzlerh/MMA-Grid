@@ -146,7 +146,7 @@ router.get('/', (req, res, next) => {
         // Connections: { groups: [{ label, color, fighters }], all_fighters } — all_fighters enriched with image_url
         const categories = puzzleData.categories || [];
         const rawNames = Array.isArray(puzzleData.all_fighters) ? [...puzzleData.all_fighters] : [];
-        const nameList = rawNames.map((n) => (typeof n === 'object' && n?.name ? n.name : n));
+        const nameList = rawNames.map((n) => (typeof n === 'object' && n != null && n?.name ? n.name : n)).map((n) => (typeof n === 'string' ? n : (n != null ? String(n) : '')));
         puzzle = {
           groups: categories.map((c, i) => ({
             label: c.name || c.label,
@@ -165,7 +165,8 @@ router.get('/', (req, res, next) => {
             )
             .then((fighterRows) => {
               const imageByName = {};
-              fighterRows.rows.forEach((r) => { imageByName[r.name] = r.image_url || null; });
+              const rows = (fighterRows && fighterRows.rows && Array.isArray(fighterRows.rows)) ? fighterRows.rows : [];
+              rows.forEach((r) => { imageByName[r.name] = r.image_url != null ? r.image_url : null; });
               puzzle.all_fighters = nameList.map((name) => ({ id: name, name, image_url: imageByName[name] || null }));
               puzzle.groups.forEach((g) => {
                 g.fighters = (g.fighters || []).map((f) => ({ ...f, image_url: imageByName[f.name] || null }));
@@ -178,7 +179,8 @@ router.get('/', (req, res, next) => {
               }
               res.set('Cache-Control', 'public, max-age=3600');
               res.json({ gameType, puzzle, difficulty: row.difficulty, puzzleDate });
-            });
+            })
+            .catch((err) => next(err));
         }
         if (puzzle.all_fighters.length > 0) {
           for (let i = puzzle.all_fighters.length - 1; i > 0; i--) {

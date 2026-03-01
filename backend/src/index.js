@@ -49,6 +49,12 @@ app.use('/api/daily', dailyRouter);
 app.use('/api/validate', validateRouter);
 app.use('/api/scores', scoresRouter);
 
+app.use((err, req, res, next) => {
+  console.error('[server error]', err.message || err);
+  if (err.stack) console.error(err.stack);
+  res.status(500).json({ error: 'Internal Server Error', message: err.message || 'An error occurred' });
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
