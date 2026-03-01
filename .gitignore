@@ -13,7 +13,7 @@ __pycache__/
 .Python
 *.egg-info/
 .eggs/
-dist/
+frontend/dist/
 build/
 
 # Virtual environments
