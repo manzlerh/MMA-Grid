@@ -23,18 +23,24 @@ if (connectionString && isProduction) {
       user: url.username || undefined,
       password: url.password || undefined,
       ssl: { rejectUnauthorized: false },
+      max: 3,
     };
   } catch (err) {
     console.warn('[db] IPv4 resolution failed, using connectionString:', err.message);
-    poolConfig = { connectionString, ssl: { rejectUnauthorized: false } };
+    poolConfig = { connectionString, ssl: { rejectUnauthorized: false }, max: 3 };
   }
 } else if (connectionString) {
-  poolConfig = { connectionString };
+  poolConfig = { connectionString, max: 3 };
   if (isProduction) poolConfig.ssl = { rejectUnauthorized: false };
 } else {
-  poolConfig = { connectionString: '' };
+  poolConfig = { connectionString: '', max: 3 };
 }
 
 const pool = new Pool(poolConfig);
+
+if (connectionString && isProduction) {
+  const port = poolConfig.port || '5432';
+  console.log('[db] Pool configured for production, port:', port, 'max:', poolConfig.max ?? 'default');
+}
 
 module.exports = { pool };

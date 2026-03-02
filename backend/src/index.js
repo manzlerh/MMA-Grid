@@ -42,6 +42,18 @@ app.use(express.json());
 
 app.get('/api', (req, res) => res.json({ ok: true, message: 'UFC trivia API' }));
 
+// Debug: test DB connectivity (remove or protect in production)
+app.get('/api/test-db', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT NOW()');
+    res.json({ ok: true, now: result.rows[0]?.now });
+  } catch (err) {
+    console.error('[test-db]', err.message || err);
+    if (err.stack) console.error(err.stack);
+    res.status(500).json({ error: err.message || 'DB connection failed' });
+  }
+});
+
 // Explicit route so GET /api/fighters/search is always matched (avoids 404 from router mount)
 app.get('/api/fighters/search', fightersSearch);
 app.use('/api/fighters', fightersRouter);
